@@ -1,0 +1,223 @@
+import { test, describe } from "node:test";
+import assert from "node:assert/strict";
+import {
+  describeMonths,
+  explainAgainstTarget,
+  explainExtra,
+  explainLumpSum,
+  explainProjection,
+  explainRate,
+  explainRequired,
+  portfolioNotes,
+  rateSentence,
+} from "../explain";
+import {
+  monthsAgainstTarget,
+  portfolioSummary,
+  projectionFor,
+  requiredRate,
+  simulateExtra,
+  simulateLumpSum,
+} from "../forecast";
+import { monthYear } from "../dates";
+import { makeGoal, NOW } from "./helpers";
+
+const noJargon = (s: string) => {
+  // Sentences the customer reads should not leak internal vocabulary.
+  for (const word of ["cents", "monthlyRate", "undefined", "NaN", "Infinity", "null"]) {
+    assert.ok(!s.includes(word), `"${s}" leaked "${word}"`);
+  }
+  assert.ok(s.length > 0);
+};
+
+describe("durations in words", () => {
+  test("months, years and both", () => {
+    assert.equal(describeMonths(1), "1 month");
+    assert.equal(describeMonths(5), "5 months");
+    assert.equal(describeMonths(12), "1 year");
+    assert.equal(describeMonths(14), "1 year 2 months");
+    assert.equal(describeMonths(24), "2 years");
+    assert.equal(describeMonths(25), "2 years 1 month");
+  });
+
+  test("zero and negatives never produce nonsense", () => {
+    assert.equal(describeMonths(0), "no time at all");
+    assert.equal(describeMonths(-4), "no time at all");
+  });
+
+  test("rates read the way a person says them", () => {
+    assert.equal(rateSentence(50_00, "weekly"), "$50 a week");
+    assert.equal(rateSentence(50_00, "fortnightly"), "$50 a fortnight");
+    assert.equal(rateSentence(50_00, "monthly"), "$50 a month");
+  });
+});
+
+describe("goal projection in words", () => {
+  const onTrack = makeGoal({
+    name: "Japan Trip", targetCents: 1000_00, openingBalanceCents: 0,
+    contributionCents: 100_00, frequency: "monthly", targetDate: "2027-10-12",
+  });
+
+  test("an early goal says so against its target", () => {
+    const p = projectionFor(onTrack, [], NOW);
+    const s = explainProjection(onTrack, p);
+    // Derived, not hardcoded: en-AU spells some months out ("July", "Sept").
+    assert.ok(s.includes(monthYear("2027-07-12")), s);
+    assert.ok(s.includes(`ahead of your ${monthYear("2027-10-12")} target`), s);
+    noJargon(s);
+  });
+
+  test("a late goal says so plainly", () => {
+    const late = makeGoal({ ...onTrack, targetDate: "2027-01-12" });
+    const s = explainProjection(late, projectionFor(late, [], NOW));
+    assert.ok(s.includes(`after your ${monthYear("2027-01-12")} target`), s);
+    noJargon(s);
+  });
+
+  test("landing in the target month reads as on target", () => {
+    const exact = makeGoal({ ...onTrack, targetDate: "2027-07-31" });
+    const s = explainProjection(exact, projectionFor(exact, [], NOW));
+    assert.match(s, /right on target/);
+  });
+
+  test("a completed goal is not given a date", () => {
+    const done = makeGoal({ name: "Emergency Fund", targetCents: 100_00, openingBalanceCents: 100_00 });
+    const s = explainProjection(done, projectionFor(done, [], NOW));
+    assert.match(s, /fully funded/);
+    noJargon(s);
+  });
+
+  test("no contribution explains itself rather than showing nonsense", () => {
+    const stalled = makeGoal({ name: "New Car", contributionCents: 0 });
+    const s = explainProjection(stalled, projectionFor(stalled, [], NOW));
+    assert.match(s, /no regular contribution/i);
+    assert.match(s, /can't work out a completion date/);
+    noJargon(s);
+  });
+
+  test("against-target line is omitted when there is no projection", () => {
+    const stalled = makeGoal({ contributionCents: 0 });
+    const p = projectionFor(stalled, [], NOW);
+    assert.equal(explainAgainstTarget(p, monthsAgainstTarget(stalled, p)), null);
+  });
+
+  test("against-target reads early, late or on the month", () => {
+    const p = projectionFor(onTrack, [], NOW);
+    assert.equal(explainAgainstTarget(p, 3), "About 3 months early.");
+    assert.equal(explainAgainstTarget(p, -3), "About 3 months late.");
+    assert.equal(explainAgainstTarget(p, 0), "Landing in your target month.");
+  });
+});
+
+describe("scenarios in words", () => {
+  const goal = makeGoal({
+    name: "House Deposit", targetCents: 12_000_00, openingBalanceCents: 0,
+    contributionCents: 200_00, frequency: "monthly", targetDate: "2030-01-01",
+  });
+
+  test("extra saving names both dates and the gain", () => {
+    const extra = { amountCents: 200_00, frequency: "monthly" as const };
+    const s = explainExtra(goal, extra, simulateExtra(goal, [], extra, NOW));
+    assert.match(s, /\$200 a month/);
+    assert.match(s, /2 years 6 months/);
+    noJargon(s);
+  });
+
+  test("an extra too small to move a whole month says so", () => {
+    const extra = { amountCents: 1, frequency: "monthly" as const };
+    const s = explainExtra(goal, extra, simulateExtra(goal, [], extra, NOW));
+    assert.match(s, /isn't quite enough/);
+    noJargon(s);
+  });
+
+  test("zero extra restates the current plan", () => {
+    const extra = { amountCents: 0, frequency: "weekly" as const };
+    const s = explainExtra(goal, extra, simulateExtra(goal, [], extra, NOW));
+    assert.match(s, /current plan/);
+  });
+
+  test("a lump sum that finishes the goal says so outright", () => {
+    const s = explainLumpSum(goal, 12_000_00, simulateLumpSum(goal, [], 12_000_00, NOW));
+    assert.match(s, /finish House Deposit outright/);
+    noJargon(s);
+  });
+
+  test("a partial lump sum gives months saved and a percentage", () => {
+    const s = explainLumpSum(goal, 6_000_00, simulateLumpSum(goal, [], 6_000_00, NOW));
+    assert.match(s, /50% complete/);
+    assert.match(s, /2 years 6 months/);
+    noJargon(s);
+  });
+
+  test("required rate states the shortfall", () => {
+    const r = requiredRate(goal, [], "2027-09-12", NOW);
+    const s = explainRequired(goal, "2027-09-12", r, "weekly");
+    assert.match(s, /a week/);
+    assert.match(s, /more than you're saving now/);
+    noJargon(s);
+  });
+
+  test("required rate congratulates when the plan already suffices", () => {
+    const r = requiredRate(goal, [], "2035-01-01", NOW);
+    const s = explainRequired(goal, "2035-01-01", r, "monthly");
+    assert.match(s, /already saving enough/);
+  });
+
+  test("an impossible date is explained, not calculated", () => {
+    const past = explainRequired(goal, "2020-01-01", requiredRate(goal, [], "2020-01-01", NOW), "weekly");
+    assert.match(past, /already passed/);
+    const soon = explainRequired(goal, "2026-09-30", requiredRate(goal, [], "2026-09-30", NOW), "weekly");
+    assert.match(soon, /less than a month away/);
+    noJargon(past);
+    noJargon(soon);
+  });
+});
+
+describe("portfolio notes", () => {
+  const near = makeGoal({
+    id: "a", name: "Japan Trip", targetCents: 1000_00, openingBalanceCents: 0,
+    contributionCents: 500_00, frequency: "monthly", targetDate: "2028-01-01",
+  });
+  const far = makeGoal({
+    id: "b", name: "House Deposit", targetCents: 5000_00, openingBalanceCents: 0,
+    contributionCents: 100_00, frequency: "monthly", targetDate: "2032-01-01",
+  });
+
+  test("names the next goal to land first", () => {
+    const notes = portfolioNotes(portfolioSummary([near, far], [], NOW));
+    assert.match(notes[0], /Japan Trip is your next goal to land/);
+    notes.forEach(noJargon);
+  });
+
+  test("mentions goals that cannot be projected", () => {
+    const stalled = makeGoal({ id: "s", name: "New Car", contributionCents: 0 });
+    const notes = portfolioNotes(portfolioSummary([near, stalled], [], NOW), 5);
+    assert.ok(notes.some((n) => /no regular contribution set/.test(n)));
+  });
+
+  test("mentions goals finishing after their target", () => {
+    const late = makeGoal({
+      id: "l", name: "New Car", targetCents: 90_000_00, openingBalanceCents: 0,
+      contributionCents: 100_00, frequency: "monthly", targetDate: "2027-01-01",
+    });
+    const notes = portfolioNotes(portfolioSummary([near, late], [], NOW), 5);
+    assert.ok(notes.some((n) => /after (its|their) target/.test(n)));
+  });
+
+  test("an empty portfolio gets one useful line", () => {
+    assert.deepEqual(portfolioNotes(portfolioSummary([], [], NOW)), [
+      "Add a goal and your forecast will appear here.",
+    ]);
+  });
+
+  test("notes are capped so the page never lectures", () => {
+    assert.ok(portfolioNotes(portfolioSummary([near, far], [], NOW), 2).length <= 2);
+  });
+
+  test("the combined rate is stated in plain words", () => {
+    const s = explainRate(portfolioSummary([near, far], [], NOW));
+    assert.match(s, /a week/);
+    noJargon(s);
+    assert.match(explainRate(portfolioSummary([], [], NOW)), /No regular saving/);
+  });
+});

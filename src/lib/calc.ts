@@ -45,6 +45,32 @@ export const monthlyRateCents = (goal: Goal): number =>
   Math.round(goal.contributionCents * PER_MONTH[goal.frequency]);
 
 /**
+ * Whole months of a given monthly rate needed to clear an outstanding amount.
+ * Null when nothing is moving. Partial months round up — you cannot half-pay.
+ *
+ * This is the single definition of "how long will this take". Projections and
+ * every What If scenario go through it, so they cannot drift apart.
+ */
+export function monthsToClear(
+  outstandingCents: number,
+  monthlyRate: number,
+): number | null {
+  if (outstandingCents <= 0) return 0;
+  if (monthlyRate <= 0) return null;
+  return Math.ceil(outstandingCents / monthlyRate);
+}
+
+/** The date a given rate clears a given amount. */
+export function completionFromRate(
+  outstandingCents: number,
+  monthlyRate: number,
+  now: Date = new Date(),
+): Date | null {
+  const months = monthsToClear(outstandingCents, monthlyRate);
+  return months === null ? null : addMonths(now, months);
+}
+
+/**
  * When the goal finishes at its planned rate.
  * Null when it is not moving — callers say "no completion date at this rate"
  * rather than rendering an infinity.
@@ -55,10 +81,11 @@ export function projectedCompletion(
   now: Date = new Date(),
 ): Date | null {
   if (isComplete(goal, contributions)) return now;
-  const rate = monthlyRateCents(goal);
-  if (rate <= 0) return null;
-  const months = Math.ceil(remainingCents(goal, contributions) / rate);
-  return addMonths(now, months);
+  return completionFromRate(
+    remainingCents(goal, contributions),
+    monthlyRateCents(goal),
+    now,
+  );
 }
 
 /**
@@ -107,11 +134,8 @@ export function paceGap(
 export const monthsRemaining = (
   goal: Goal,
   contributions: Contribution[],
-): number | null => {
-  const rate = monthlyRateCents(goal);
-  if (rate <= 0) return null;
-  return Math.ceil(remainingCents(goal, contributions) / rate);
-};
+): number | null =>
+  monthsToClear(remainingCents(goal, contributions), monthlyRateCents(goal));
 
 export interface LedgerRow extends Contribution {
   /** Balance after this contribution, oldest to newest. */
@@ -222,9 +246,123 @@ export interface ForecastPoint {
   valueCents: number;
 }
 
+export interface ForecastMonth {
+  /** Months from now. 0 is today. */
+  month: number;
+  /** YYYY-MM-DD, the same day-of-month as today where it exists. */
+  date: string;
+  valueCents: number;
+}
+
+export interface ForecastMilestone {
+  goalId: string;
+  name: string;
+  month: number;
+  date: string;
+  /** Portfolio value at the month this goal completes. */
+  valueCents: number;
+}
+
+export interface PortfolioForecast {
+  months: ForecastMonth[];
+  milestones: ForecastMilestone[];
+  horizonMonths: number;
+  /** True when a goal is still unfinished at the end of the horizon. */
+  truncated: boolean;
+}
+
+const MIN_HORIZON = 48;
+const MAX_HORIZON = 120;
+
 /**
- * Projects total savings forward year by year, adding each goal's planned rate
- * until that goal reaches its target and then stopping it.
+ * How far the chart should run: far enough to show every goal landing, but
+ * never beyond ten years, past which a projection is not worth drawing.
+ */
+export function forecastHorizon(
+  goals: Goal[],
+  contributions: Contribution[],
+): number {
+  const needed = goals
+    .filter((g) => !isArchived(g))
+    .map((g) => monthsRemaining(g, contributions))
+    .filter((m): m is number => m !== null);
+  const longest = needed.length ? Math.max(...needed) : 0;
+  return Math.min(Math.max(longest + 2, MIN_HORIZON), MAX_HORIZON);
+}
+
+/**
+ * The portfolio walked forward one month at a time — the single forecast
+ * engine. Each month every unfinished goal adds its monthly rate, capped at
+ * its target. Archived goals are excluded; goals already at or over target
+ * contribute their balance and stop.
+ *
+ * Weekly and fortnightly contributions arrive here already converted at 52 and
+ * 26 payments a year (see PER_MONTH), which is the model the whole app uses.
+ */
+export function portfolioForecast(
+  goals: Goal[],
+  contributions: Contribution[],
+  now: Date = new Date(),
+  horizonMonths?: number,
+): PortfolioForecast {
+  const live = goals.filter((g) => !isArchived(g));
+  const horizon = horizonMonths ?? forecastHorizon(goals, contributions);
+
+  const state = live.map((g) => ({
+    id: g.id,
+    name: g.name,
+    balance: balanceCents(g, contributions),
+    target: g.targetCents,
+    rate: monthlyRateCents(g),
+    done: false,
+  }));
+
+  const total = () => state.reduce((sum, g) => sum + g.balance, 0);
+  const months: ForecastMonth[] = [
+    { month: 0, date: toISODate(now), valueCents: total() },
+  ];
+  const milestones: ForecastMilestone[] = [];
+
+  // A goal that is already at target counts as landed at month zero.
+  for (const g of state) {
+    if (g.balance >= g.target) {
+      g.done = true;
+      milestones.push({
+        goalId: g.id, name: g.name, month: 0,
+        date: toISODate(now), valueCents: months[0].valueCents,
+      });
+    }
+  }
+
+  for (let m = 1; m <= horizon; m++) {
+    for (const g of state) {
+      if (g.balance >= g.target) continue;
+      g.balance = Math.min(g.balance + g.rate, g.target);
+    }
+    const valueCents = total();
+    const date = toISODate(addMonths(now, m));
+    months.push({ month: m, date, valueCents });
+
+    for (const g of state) {
+      if (!g.done && g.balance >= g.target) {
+        g.done = true;
+        milestones.push({ goalId: g.id, name: g.name, month: m, date, valueCents });
+      }
+    }
+  }
+
+  return {
+    months,
+    milestones,
+    horizonMonths: horizon,
+    truncated: state.some((g) => !g.done),
+  };
+}
+
+/**
+ * The dashboard's yearly series, sampled from the monthly walker above rather
+ * than walked separately — so the tile, the dashboard chart and the forecast
+ * page can never disagree.
  */
 export function forecastSeries(
   goals: Goal[],
@@ -232,33 +370,12 @@ export function forecastSeries(
   now: Date = new Date(),
   years = 4,
 ): ForecastPoint[] {
-  const live = goals.filter((g) => !isArchived(g));
+  const { months } = portfolioForecast(goals, contributions, now, years * 12);
   const startYear = now.getFullYear();
-
-  const state = live.map((g) => ({
-    balance: balanceCents(g, contributions),
-    target: g.targetCents,
-    rate: monthlyRateCents(g),
+  return Array.from({ length: years + 1 }, (_, y) => ({
+    year: startYear + y,
+    valueCents: months[y * 12].valueCents,
   }));
-
-  const points: ForecastPoint[] = [
-    { year: startYear, valueCents: state.reduce((s, g) => s + g.balance, 0) },
-  ];
-
-  for (let y = 1; y <= years; y++) {
-    for (const g of state) {
-      for (let m = 0; m < 12; m++) {
-        if (g.balance >= g.target) break;
-        g.balance = Math.min(g.balance + g.rate, g.target);
-      }
-    }
-    points.push({
-      year: startYear + y,
-      valueCents: state.reduce((s, g) => s + g.balance, 0),
-    });
-  }
-
-  return points;
 }
 
 export { monthsBetween, toISODate };
