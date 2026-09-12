@@ -115,7 +115,11 @@ export default function DashboardPage() {
               subtitle="Make saving fun."
               action={{ href: "/challenges", label: "View all" }}
             >
-              <ChallengeCard />
+              <ChallengeCard
+                challenges={data.challenges}
+                goals={data.goals}
+                contributions={data.contributions}
+              />
             </Panel>
 
             <Panel title="Recent Activity" action={{ href: "/goals", label: "View all" }}>
