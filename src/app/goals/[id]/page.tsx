@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/Skeleton";
 import { StoreNotices } from "@/components/StoreNotices";
 import { ContributionHistory } from "@/components/contributions/ContributionHistory";
 import { QuickAdd } from "@/components/contributions/QuickAdd";
+import { GoalArtwork } from "@/components/goals/GoalArtwork";
 import { GoalImage } from "@/components/goals/GoalImage";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
@@ -27,8 +28,6 @@ import {
 import { money } from "@/lib/money";
 import { fullDate, monthYear, toISODate } from "@/lib/dates";
 import { CATEGORY_LABEL, FREQUENCY_LABEL, PRIORITY_LABEL } from "@/lib/schema";
-
-const FALLBACK_THUMB = "from-[#B9C4BB] via-[#7E8F82] to-[#4F6157]";
 
 export default function GoalDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -68,8 +67,11 @@ export default function GoalDetailPage({ params }: { params: Promise<{ id: strin
       <StoreNotices />
 
       <header
-        className={`relative overflow-hidden rounded-panel bg-gradient-to-br ${goal.thumb ?? FALLBACK_THUMB} px-6 pt-6 pb-7`}
+        className="relative overflow-hidden rounded-panel px-6 pt-6 pb-7"
       >
+        <div aria-hidden className="absolute inset-0">
+          <GoalArtwork category={goal.category} />
+        </div>
         {goal.imageId && (
           <GoalImage
             imageId={goal.imageId}
@@ -77,29 +79,29 @@ export default function GoalDetailPage({ params }: { params: Promise<{ id: strin
             className="absolute inset-0 h-full w-full object-cover"
           />
         )}
-        <div aria-hidden className="absolute inset-0 bg-forest/45" />
+        <div aria-hidden className="absolute inset-0 bg-primary/60" />
         <div className="relative">
           <Link
             href="/goals"
-            className="text-[11px] tracking-[0.14em] text-cream/85 no-underline hover:text-cream hover:underline"
+            className="inline-flex min-h-[28px] items-center text-[11px] tracking-[0.14em] text-on-primary/85 no-underline hover:text-on-primary hover:underline"
           >
             ← MY GOALS
           </Link>
 
           <div className="mt-2.5 flex flex-wrap items-center gap-3">
-            <h1 className="font-display text-[clamp(28px,4vw,40px)] leading-none font-semibold text-cream">
+            <h1 className="font-display text-[clamp(28px,4vw,40px)] leading-none font-semibold text-on-primary">
               {goal.emoji ? `${goal.emoji} ` : ""}
               {goal.name}
             </h1>
             <StatusChip status={status} />
             {goal.archivedAt && (
-              <span className="rounded-full bg-cream/20 px-3 py-1 text-[10px] tracking-[0.1em] text-cream">
+              <span className="rounded-full bg-on-primary/20 px-3 py-1 text-[10px] tracking-[0.1em] text-on-primary">
                 ARCHIVED
               </span>
             )}
           </div>
 
-          <p className="mt-2 flex flex-wrap gap-x-3 text-[11px] tracking-[0.1em] text-cream/75">
+          <p className="mt-2 flex flex-wrap gap-x-3 text-[11px] tracking-[0.1em] text-on-primary/75">
             <span>{category.toUpperCase()}</span>
             <span aria-hidden>·</span>
             <span>{PRIORITY_LABEL[goal.priority].toUpperCase()} PRIORITY</span>
@@ -110,7 +112,7 @@ export default function GoalDetailPage({ params }: { params: Promise<{ id: strin
           </p>
 
           {goal.notes && (
-            <p className="mt-2.5 max-w-[46ch] text-[13px] leading-relaxed text-cream/85">
+            <p className="mt-2.5 max-w-[46ch] text-[13px] leading-relaxed text-on-primary/85">
               {goal.notes}
             </p>
           )}
@@ -156,8 +158,8 @@ export default function GoalDetailPage({ params }: { params: Promise<{ id: strin
             <p
               className={`rounded-card px-4 py-3 text-[12.5px] leading-relaxed ${
                 status === "behind"
-                  ? "bg-[#F1E4DA] text-terracotta-deep"
-                  : "bg-sage-light/60 text-forest"
+                  ? "bg-warm-soft text-warning"
+                  : "bg-tint-soft/60 text-primary"
               }`}
             >
               {status === "complete" ? (

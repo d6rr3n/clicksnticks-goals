@@ -17,22 +17,22 @@ export function StoreNotices() {
   return (
     <>
       {mode === "demo" && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-card border border-sage-deep/25 bg-sage-light/50 px-4 py-3 text-[12.5px] text-forest">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-card border border-secondary/25 bg-tint-soft/50 px-4 py-3 text-[12.5px] text-primary">
           <b className="text-[9.5px] font-medium tracking-[0.14em]">DEMO DATA</b>
           <span className="text-muted">
             Example goals, safe to change. Your own goals are kept separately.
           </span>
           <span className="ml-auto flex flex-wrap gap-3">
-            <button type="button" onClick={resetDemo} className="text-sage-deep hover:underline">
+            <button type="button" onClick={resetDemo} className="inline-flex min-h-[24px] items-center text-secondary hover:underline">
               Reset demo
             </button>
             {confirmFresh ? (
               <span className="flex items-center gap-2">
                 <span className="text-muted">Start empty? Demo data isn&apos;t carried over.</span>
-                <button type="button" onClick={startFresh} className="font-medium text-sage-deep hover:underline">
+                <button type="button" onClick={startFresh} className="inline-flex min-h-[24px] items-center font-medium text-secondary hover:underline">
                   Yes, start fresh
                 </button>
-                <button type="button" onClick={() => setConfirmFresh(false)} className="text-muted hover:underline">
+                <button type="button" onClick={() => setConfirmFresh(false)} className="inline-flex min-h-[24px] items-center text-muted hover:underline">
                   Cancel
                 </button>
               </span>
@@ -40,7 +40,7 @@ export function StoreNotices() {
               <button
                 type="button"
                 onClick={() => setConfirmFresh(true)}
-                className="font-medium text-sage-deep hover:underline"
+                className="inline-flex min-h-[24px] items-center font-medium text-secondary hover:underline"
               >
                 Start fresh
               </button>
@@ -50,7 +50,7 @@ export function StoreNotices() {
       )}
 
       {writeError && (
-        <p role="alert" className="rounded-card border border-terracotta-deep/30 bg-blush px-4 py-3 text-[12.5px] text-terracotta-deep">
+        <p role="alert" className="rounded-card border border-warning/30 bg-warm px-4 py-3 text-[12.5px] text-warning">
           {writeError === "quota"
             ? "This device is out of storage space, so recent changes haven't been saved. Removing a goal image usually frees enough."
             : "Changes can't be saved on this device — private browsing blocks local storage. They'll be lost when you close this tab."}
@@ -58,14 +58,14 @@ export function StoreNotices() {
       )}
 
       {recovered === "corrupt" && (
-        <p role="alert" className="rounded-card border border-terracotta-deep/30 bg-blush px-4 py-3 text-[12.5px] text-terracotta-deep">
+        <p role="alert" className="rounded-card border border-warning/30 bg-warm px-4 py-3 text-[12.5px] text-warning">
           Saved data couldn&apos;t be read and has been set aside rather than deleted.
           You&apos;re starting from an empty list.
         </p>
       )}
 
       {recovered === "future-version" && (
-        <p role="alert" className="rounded-card border border-terracotta-deep/30 bg-blush px-4 py-3 text-[12.5px] text-terracotta-deep">
+        <p role="alert" className="rounded-card border border-warning/30 bg-warm px-4 py-3 text-[12.5px] text-warning">
           Your saved data was written by a newer version of this app, so it hasn&apos;t
           been opened. Update to see it. <Link href="/" className="underline">Reload</Link>
         </p>

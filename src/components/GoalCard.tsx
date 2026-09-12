@@ -7,10 +7,9 @@ import { money } from "@/lib/money";
 import { monthYear } from "@/lib/dates";
 import { ProgressBar } from "./ui/ProgressBar";
 import { StatusChip } from "./ui/StatusChip";
+import { GoalArtwork } from "./goals/GoalArtwork";
 import { GoalImage } from "./goals/GoalImage";
 import { CalendarIcon, CoinsIcon, FlagIcon } from "./icons";
-
-const FALLBACK_THUMB = "from-[#B9C4BB] via-[#7E8F82] to-[#4F6157]";
 
 export function GoalCard({
   goal,
@@ -27,9 +26,10 @@ export function GoalCard({
   return (
     <Link
       href={`/goals/${goal.id}`}
-      className="group flex flex-col overflow-hidden rounded-card border border-line bg-canvas no-underline transition-shadow hover:shadow-[0_8px_28px_-14px_rgba(23,46,44,.35)]"
+      className="group flex flex-col overflow-hidden rounded-card border border-border bg-background no-underline transition-shadow hover:hover:shadow-[0_10px_30px_-16px_color-mix(in_srgb,var(--edition-primary)_38%,transparent)]"
     >
-      <div className={`relative h-26 bg-gradient-to-br ${goal.thumb ?? FALLBACK_THUMB}`}>
+      <div className="relative h-26 overflow-hidden">
+        <GoalArtwork category={goal.category} />
         {goal.imageId && (
           <GoalImage
             imageId={goal.imageId}
@@ -37,19 +37,21 @@ export function GoalCard({
             className="absolute inset-0 h-full w-full object-cover"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-forest/30" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-primary/25" />
         <StatusChip status={status} className="absolute top-2.5 left-2.5" />
-        {goal.emoji && (
-          <span aria-hidden className="absolute right-2.5 bottom-2 text-xl drop-shadow">
-            {goal.emoji}
-          </span>
-        )}
       </div>
 
       <div className="flex flex-1 flex-col gap-2.5 p-3.5">
-        <h3 className="font-display text-[17.5px] font-semibold text-forest">{goal.name}</h3>
+        <h3 className="flex items-baseline gap-1.5 font-display text-[17.5px] font-semibold text-primary">
+          {goal.emoji && (
+            <span aria-hidden className="text-[15px] leading-none">
+              {goal.emoji}
+            </span>
+          )}
+          {goal.name}
+        </h3>
 
-        <p className="tabular text-[17px] font-medium text-forest">
+        <p className="tabular text-[17px] font-medium text-primary">
           {money(balanceCents(goal, contributions))}{" "}
           <span className="text-xs font-normal text-muted">/ {money(goal.targetCents)}</span>
         </p>
@@ -62,18 +64,18 @@ export function GoalCard({
 
         <div className="mt-auto flex flex-col gap-1.5 pt-1 text-[11.5px] text-muted">
           <span className="flex items-center gap-2">
-            <CalendarIcon className="h-3.5 w-3.5 shrink-0 text-sage-deep" />
+            <CalendarIcon className="h-3.5 w-3.5 shrink-0 text-secondary" />
             {complete ? "Target: Complete" : `Target: ${monthYear(goal.targetDate)}`}
           </span>
           <span className="flex items-center gap-2">
             {complete ? (
               <>
-                <FlagIcon className="h-3.5 w-3.5 shrink-0 text-sage-deep" />
+                <FlagIcon className="h-3.5 w-3.5 shrink-0 text-secondary" />
                 Goal achieved!
               </>
             ) : (
               <>
-                <CoinsIcon className="h-3.5 w-3.5 shrink-0 text-sage-deep" />
+                <CoinsIcon className="h-3.5 w-3.5 shrink-0 text-secondary" />
                 <span className="tabular">{money(remainingCents(goal, contributions))} to go</span>
               </>
             )}

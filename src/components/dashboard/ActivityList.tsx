@@ -37,29 +37,29 @@ export function ActivityList({
         return (
           <li
             key={c.id}
-            className="flex items-center gap-3 border-b border-line py-2.5 last:border-0 last:pb-0"
+            className="flex items-center gap-3 border-b border-border py-2.5 last:border-0 last:pb-0"
           >
             <span
               className={`grid h-[29px] w-[29px] shrink-0 place-items-center rounded-full ${
-                deposit ? "bg-sage-light" : "bg-blush"
+                deposit ? "bg-tint-soft" : "bg-warm"
               }`}
             >
               {deposit ? (
-                <PlusIcon className="h-3.5 w-3.5 text-forest" />
+                <PlusIcon className="h-3.5 w-3.5 text-primary" />
               ) : (
-                <MinusIcon className="h-3.5 w-3.5 text-terracotta-deep" />
+                <MinusIcon className="h-3.5 w-3.5 text-warning" />
               )}
             </span>
             <span
               className={`tabular min-w-[52px] text-[13.5px] font-medium ${
-                deposit ? "" : "text-terracotta-deep"
+                deposit ? "" : "text-warning"
               }`}
             >
               {signedMoney(c.amountCents)}
             </span>
             <Link
               href={`/goals/${c.goalId}`}
-              className="flex-1 truncate text-[12.5px] text-muted no-underline hover:text-forest hover:underline"
+              className="inline-flex min-h-[24px] flex-1 items-center truncate text-[12.5px] text-muted no-underline hover:text-primary hover:underline"
             >
               {names.get(c.goalId) ?? "Removed goal"}
             </Link>

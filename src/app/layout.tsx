@@ -16,6 +16,16 @@ const jost = Jost({
   display: "swap",
 });
 
+/**
+ * The visual edition. Every colour in the app resolves from this one attribute
+ * via the tokens in globals.css — switching it re-themes the product and
+ * changes nothing about calculations, storage, navigation or behaviour.
+ *
+ *   "sage"  — Clicks'n'Ticks GOALS, Sage Edition (the shipping product)
+ *   "blush" — the Blush/Rose treatment, preserved for a future edition
+ */
+const EDITION: "sage" | "blush" = "sage";
+
 export const metadata: Metadata = {
   title: {
     default: "Clicks'n'Ticks GOALS",
@@ -26,7 +36,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-AU" className={`${playfair.variable} ${jost.variable}`}>
+    <html
+      lang="en-AU"
+      data-edition={EDITION}
+      className={`${playfair.variable} ${jost.variable}`}
+    >
       <body className="font-sans antialiased">
         <GoalsProvider>
           <AppShell>{children}</AppShell>

@@ -1,28 +1,124 @@
 @import "tailwindcss";
 
 /*
- * The GOALS colourway is the Sage/Botanical scheme from the approved
- * dashboard. The Clicks'n'Ticks logo remains the master brand mark, adapted
- * to this palette. See reference/README.md for measured contrast ratios.
+ * ─── Clicks'n'Ticks Editions ──────────────────────────────────────────────
+ *
+ * One engine, one component system, interchangeable visual editions.
+ *
+ * Components only ever reference SEMANTIC tokens (primary, surface, warning…).
+ * Each edition supplies the raw values below. Adding an edition means adding
+ * one selector block here and nothing else — no component changes, and no
+ * effect on calculations, storage, navigation or behaviour.
+ *
+ * Switch edition with the data-edition attribute on <html>.
+ *
+ * Contrast ratios quoted below are measured, not estimated. See
+ * reference/README.md for the full table and the rules that follow from it.
  */
-@theme {
-  /* --- GOALS colourway, sampled from reference/01-GOALS-APPROVED-DASHBOARD.png --- */
-  --color-forest: #172e2c;
-  --color-forest-hi: #2a403b;
-  --color-sage: #a4b5af;
-  --color-sage-light: #bdc7bf;
-  --color-sage-deep: #4a6b5e;
-  --color-blush: #e3d3c7;
-  --color-terracotta: #9b674f;
-  --color-terracotta-deep: #8b4d31;
 
-  /* --- surfaces --- */
-  --color-cream: #f7f2ec;
-  --color-canvas: #efe9e3;
-  --color-surface: #f8f4f0;
-  --color-track: #e3dbd3;
-  --color-line: #e2d9d1;
-  --color-muted: #6a625c;
+/* ─── Sage Edition (default) ───────────────────────────────────────────────
+ * The approved GOALS colourway from reference/01-GOALS-APPROVED-DASHBOARD.png.
+ * Forest carries the structure; sage and eucalyptus support; terracotta and
+ * soft peach are restrained accents; warm beige and off-white hold the ground.
+ */
+:root,
+[data-edition="sage"] {
+  --edition-primary: #022825; /* Primary Forest      14.25:1 on background */
+  --edition-primary-hover: #0e3b36;
+  --edition-secondary: #4a6c6a; /* Muted Eucalyptus   5.21:1 */
+  --edition-accent: #864026; /* Terracotta           6.85:1 */
+  --edition-accent-soft: #ca8663; /* Soft Peach       decorative only */
+  --edition-tint: #96b0a4; /* Sage                   decorative only */
+  --edition-tint-soft: #c4d2c9;
+  --edition-warm: #dbbc9e; /* Warm Beige             decorative only */
+  --edition-warm-soft: #eee0cd;
+
+  --edition-on-primary: #f7f3ed;
+  --edition-background: #f2ede5;
+  --edition-surface: #fcfaf6;
+  --edition-surface-alt: #f7f2ea;
+  --edition-track: #e7dccb;
+  --edition-border: #e2d8c8;
+  --edition-text: #1b2523;
+  --edition-text-muted: #6b635a;
+
+  --edition-success: #4a6c6a; /* on track   4.25:1 on track fill */
+  --edition-warning: #864026; /* behind     5.58:1 on track fill */
+
+  /* Decorative washes. Botanical only — never carries meaning. */
+  --edition-wash-a: 155, 103, 79; /* terracotta */
+  --edition-wash-b: 74, 108, 106; /* eucalyptus */
+
+  --edition-hero-from: #f5f1e9;
+  --edition-hero-via: #e6ece6;
+  --edition-hero-to: #cfdcd3;
+}
+
+/* ─── Blush Edition (preserved, not the default) ───────────────────────────
+ * The rose treatment, kept intact so it can become a separate edition.
+ * Set data-edition="blush" on <html> to see it.
+ */
+[data-edition="blush"] {
+  --edition-primary: #241c1b;
+  --edition-primary-hover: #322624;
+  --edition-secondary: #a85f58;
+  --edition-accent: #d49790;
+  --edition-accent-soft: #efcec8;
+  --edition-tint: #dbb3ac;
+  --edition-tint-soft: #efcec8;
+  --edition-warm: #e3d3c7;
+  --edition-warm-soft: #f0e3da;
+
+  --edition-on-primary: #faf5ef;
+  --edition-background: #f4eee9;
+  --edition-surface: #fffcf9;
+  --edition-surface-alt: #faf4f0;
+  --edition-track: #e8dad2;
+  --edition-border: #e9dcd4;
+  --edition-text: #241c1b;
+  --edition-text-muted: #6e5b58;
+
+  --edition-success: #a85f58;
+  --edition-warning: #9a5c33;
+
+  --edition-wash-a: 212, 151, 144;
+  --edition-wash-b: 219, 179, 172;
+
+  --edition-hero-from: #fbf6f1;
+  --edition-hero-via: #f6e7e1;
+  --edition-hero-to: #efd3cb;
+}
+
+/*
+ * Semantic tokens. `inline` keeps these as var() references at the point of
+ * use, so a change of edition re-themes the page without rebuilding CSS.
+ */
+@theme inline {
+  --color-primary: var(--edition-primary);
+  --color-primary-hover: var(--edition-primary-hover);
+  --color-on-primary: var(--edition-on-primary);
+  --color-secondary: var(--edition-secondary);
+  --color-accent: var(--edition-accent);
+  --color-accent-soft: var(--edition-accent-soft);
+  --color-tint: var(--edition-tint);
+  --color-tint-soft: var(--edition-tint-soft);
+  --color-warm: var(--edition-warm);
+  --color-warm-soft: var(--edition-warm-soft);
+
+  --color-background: var(--edition-background);
+  --color-surface: var(--edition-surface);
+  --color-surface-alt: var(--edition-surface-alt);
+  --color-track: var(--edition-track);
+  --color-border: var(--edition-border);
+  --color-text: var(--edition-text);
+  --color-text-muted: var(--edition-text-muted);
+  /* Readable aliases for the same values, so classes read `text-muted`
+     rather than `text-text-muted`. */
+  --color-ink: var(--edition-text);
+  --color-muted: var(--edition-text-muted);
+
+  --color-success: var(--edition-success);
+  --color-warning: var(--edition-warning);
 
   --font-display: var(--font-playfair), Georgia, "Times New Roman", serif;
   --font-sans: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
@@ -33,18 +129,34 @@
 
 @layer base {
   body {
-    background: var(--color-canvas);
-    color: var(--color-forest);
+    background: var(--edition-background);
+    color: var(--edition-text);
     -webkit-font-smoothing: antialiased;
   }
-  /* Figures line up in columns wherever they're compared. */
+
+  /* Figures line up wherever they are compared down a column. */
   .tabular {
     font-variant-numeric: tabular-nums;
   }
+
   :focus-visible {
-    outline: 2px solid var(--color-sage-deep);
+    outline: 2px solid var(--edition-secondary);
     outline-offset: 3px;
     border-radius: 4px;
+  }
+
+  /* Focus on a dark surface needs the light side of the palette to be seen. */
+  .on-dark :focus-visible {
+    outline-color: var(--edition-tint);
+  }
+}
+
+@layer components {
+  /* One elevation, defined once, tinted by the edition's own primary. */
+  .elevated {
+    box-shadow:
+      0 1px 2px color-mix(in srgb, var(--edition-primary) 6%, transparent),
+      0 8px 24px -12px color-mix(in srgb, var(--edition-primary) 22%, transparent);
   }
 }
 
@@ -53,6 +165,8 @@
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

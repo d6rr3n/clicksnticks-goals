@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "../ui/Button";
-import { Field, inputClass } from "../ui/Field";
+import { dateInputClass, Field, inputClass } from "../ui/Field";
 import { Panel } from "../ui/Panel";
 import { useGoals } from "@/lib/store/GoalsStore";
 import { newId } from "@/lib/store/mutations";
@@ -24,13 +24,6 @@ import {
 } from "@/lib/schema";
 import { isValid, validateGoal, type Errors, type GoalField, type GoalInput } from "@/lib/validate";
 import { GoalImage } from "./GoalImage";
-
-const THUMBS = [
-  "from-[#B9C4BB] via-[#7E8F82] to-[#4F6157]",
-  "from-[#CBD6CE] via-[#8FA69A] to-[#3F5A52]",
-  "from-[#E0C3A6] via-[#B58A62] to-[#7C5A3E]",
-  "from-[#D9DCD2] via-[#A2AC9E] to-[#5E6B60]",
-];
 
 const EMOJI = ["🏡", "✈️", "🚙", "💍", "👶", "🌿", "🎓", "💼", "🎄", "🌸", "⛵", "🎁"];
 
@@ -144,7 +137,6 @@ export function GoalForm({ existing }: { existing?: Goal }) {
     const goal: Goal = {
       ...shared,
       id: newId(),
-      thumb: THUMBS[Math.floor(Math.random() * THUMBS.length)],
       createdAt: new Date().toISOString(),
       archivedAt: null,
       completedAt: null,
@@ -257,7 +249,7 @@ export function GoalForm({ existing }: { existing?: Goal }) {
                 {...p}
                 type="date"
                 min={toISODate(new Date())}
-                className={inputClass(Boolean(errors.targetDate))}
+                className={dateInputClass(Boolean(errors.targetDate))}
                 value={form.targetDate}
                 onChange={(e) => set("targetDate", e.target.value)}
               />
@@ -309,8 +301,8 @@ export function GoalForm({ existing }: { existing?: Goal }) {
                   onClick={() => set("emoji", form.emoji === e ? "" : e)}
                   className={`grid h-10 w-10 place-items-center rounded-[10px] border text-lg transition-colors ${
                     form.emoji === e
-                      ? "border-sage-deep bg-sage-light"
-                      : "border-line bg-surface hover:bg-canvas"
+                      ? "border-secondary bg-tint-soft"
+                      : "border-border bg-surface hover:bg-background"
                   }`}
                 >
                   {e}
@@ -318,7 +310,7 @@ export function GoalForm({ existing }: { existing?: Goal }) {
               ))}
             </div>
             {errors.emoji && (
-              <p role="alert" className="mt-1.5 text-[11.5px] font-medium text-terracotta-deep">
+              <p role="alert" className="mt-1.5 text-[11.5px] font-medium text-warning">
                 {errors.emoji}
               </p>
             )}
@@ -357,7 +349,7 @@ export function GoalForm({ existing }: { existing?: Goal }) {
                     accept="image/*"
                     disabled={busy}
                     onChange={(e) => onPickImage(e.target.files?.[0])}
-                    className="text-[12.5px] text-muted file:mr-3 file:rounded-full file:border-0 file:bg-forest file:px-4 file:py-2 file:text-[12.5px] file:text-cream"
+                    className="text-[12.5px] text-muted file:mr-3 file:rounded-full file:border-0 file:bg-primary file:px-4 file:py-2 file:text-[12.5px] file:text-on-primary"
                   />
                   {imageId && (
                     <Button type="button" variant="ghost" onClick={onRemoveImage}>
@@ -380,7 +372,7 @@ export function GoalForm({ existing }: { existing?: Goal }) {
         </div>
 
         {submitted && !isValid(errors) && (
-          <p role="status" className="mt-3 text-[12.5px] text-terracotta-deep">
+          <p role="status" className="mt-3 text-[12.5px] text-warning">
             Check the highlighted fields above.
           </p>
         )}

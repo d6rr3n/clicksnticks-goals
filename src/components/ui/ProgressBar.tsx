@@ -1,13 +1,14 @@
 import type { GoalStatus } from "@/lib/schema";
 
 /**
- * Mid sage is deliberately absent here: at 2.25:1 against the track it does
- * not read as a fill. See reference/README.md.
+ * The decorative tints are deliberately absent here. Against the track they
+ * sit near 1.7:1 and do not read as a bar, so fills only ever use success,
+ * warning or primary. See reference/README.md.
  */
 const FILL: Record<GoalStatus, string> = {
-  "on-track": "bg-sage-deep",
-  behind: "bg-terracotta-deep",
-  complete: "bg-forest",
+  "on-track": "bg-success",
+  behind: "bg-warning",
+  complete: "bg-primary",
 };
 
 export function ProgressBar({

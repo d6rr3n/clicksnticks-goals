@@ -17,7 +17,7 @@ export function Panel({
 }) {
   return (
     <section
-      className={`rounded-panel bg-surface p-5 shadow-[0_1px_2px_rgba(36,28,27,.05),0_8px_24px_-12px_rgba(36,28,27,.18)] ${className}`}
+      className={`rounded-panel bg-surface p-5 elevated ${className}`}
     >
       {(title || action) && (
         <div className="mb-3 flex items-baseline justify-between gap-4">
@@ -30,7 +30,7 @@ export function Panel({
           {action && (
             <Link
               href={action.href}
-              className="inline-flex shrink-0 items-center gap-1.5 text-xs text-sage-deep no-underline hover:text-forest hover:underline"
+              className="inline-flex min-h-[24px] shrink-0 items-center gap-1.5 text-xs text-secondary no-underline hover:text-primary hover:underline"
             >
               {action.label} →
             </Link>

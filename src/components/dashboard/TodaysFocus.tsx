@@ -17,9 +17,9 @@ export function TodaysFocus({
   now: Date;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-panel bg-blush p-5">
-      <h2 className="flex items-center gap-2 font-display text-xl font-semibold text-forest">
-        <TargetIcon className="h-4 w-4 text-sage-deep" />
+    <div className="flex flex-col gap-3 rounded-panel bg-warm p-5">
+      <h2 className="flex items-center gap-2 font-display text-xl font-semibold text-primary">
+        <TargetIcon className="h-4 w-4 text-secondary" />
         Today&apos;s Focus
       </h2>
 
@@ -41,7 +41,7 @@ export function TodaysFocus({
 
       <Link
         href={`/goals/${goal.id}`}
-        className="mt-auto inline-flex items-center justify-center gap-2 rounded-full bg-forest px-5 py-3 text-[13px] text-cream no-underline transition-colors hover:bg-sage-deep"
+        className="mt-auto inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-[13px] text-on-primary no-underline transition-colors hover:bg-secondary"
       >
         View Goal
         <ArrowRightIcon className="h-3.5 w-3.5" />

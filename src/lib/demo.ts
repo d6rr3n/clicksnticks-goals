@@ -36,7 +36,6 @@ function seeds(now: Date): Seed[] {
         frequency: "weekly",
         priority: "high",
         openedMonthsAgo: 32,
-        thumb: "from-[#B9C4BB] via-[#7E8F82] to-[#4F6157]",
       },
       ledger: [
         { amountCents: 200_00, daysAgo: 2 },
@@ -61,7 +60,6 @@ function seeds(now: Date): Seed[] {
         frequency: "weekly",
         priority: "medium",
         openedMonthsAgo: 17,
-        thumb: "from-[#CBD6CE] via-[#8FA69A] to-[#3F5A52]",
       },
       ledger: [
         { amountCents: 50_00, daysAgo: 4 },
@@ -85,7 +83,6 @@ function seeds(now: Date): Seed[] {
         frequency: "monthly",
         priority: "low",
         openedMonthsAgo: 12,
-        thumb: "from-[#E0C3A6] via-[#B58A62] to-[#7C5A3E]",
       },
       ledger: [
         { amountCents: -90_00, daysAgo: 9, note: "Rego came early" },
@@ -109,7 +106,6 @@ function seeds(now: Date): Seed[] {
         frequency: "monthly",
         priority: "high",
         openedMonthsAgo: 27,
-        thumb: "from-[#D9DCD2] via-[#A2AC9E] to-[#5E6B60]",
       },
       ledger: [
         { amountCents: 150_00, daysAgo: 7 },

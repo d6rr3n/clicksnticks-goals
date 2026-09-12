@@ -55,18 +55,18 @@ export function ForecastChart({ series }: { series: ForecastPoint[] }) {
       >
         <defs>
           <linearGradient id="forecast-area" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="var(--color-sage-deep)" stopOpacity="0.42" />
-            <stop offset="1" stopColor="var(--color-sage-deep)" stopOpacity="0.04" />
+            <stop offset="0" stopColor="var(--color-secondary)" stopOpacity="0.42" />
+            <stop offset="1" stopColor="var(--color-secondary)" stopOpacity="0.04" />
           </linearGradient>
         </defs>
 
-        <g stroke="var(--color-line)" strokeWidth="1">
+        <g stroke="var(--color-border)" strokeWidth="1">
           {ticks.map((t) => (
             <line key={t} x1={PLOT.left} y1={y(t)} x2={PLOT.right} y2={y(t)} />
           ))}
         </g>
 
-        <g fill="var(--color-muted)" fontSize="10" textAnchor="end" className="font-sans">
+        <g fill="var(--color-text-muted)" fontSize="10" textAnchor="end" className="font-sans">
           {ticks.map((t) => (
             <text key={t} x={PLOT.left - 8} y={y(t) + 4}>
               {shortMoney(t)}
@@ -78,7 +78,7 @@ export function ForecastChart({ series }: { series: ForecastPoint[] }) {
         <path
           d={line}
           fill="none"
-          stroke="var(--color-sage-deep)"
+          stroke="var(--color-secondary)"
           strokeWidth="2.2"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -91,13 +91,13 @@ export function ForecastChart({ series }: { series: ForecastPoint[] }) {
             cy={y(p.valueCents)}
             r="3.4"
             fill="var(--color-surface)"
-            stroke="var(--color-sage-deep)"
+            stroke="var(--color-secondary)"
             strokeWidth="2"
           />
         ))}
-        <circle cx={x(series.length - 1)} cy={y(last.valueCents)} r="5" fill="var(--color-forest)" />
+        <circle cx={x(series.length - 1)} cy={y(last.valueCents)} r="5" fill="var(--color-primary)" />
 
-        <g fill="var(--color-muted)" fontSize="10" textAnchor="middle" className="font-sans">
+        <g fill="var(--color-text-muted)" fontSize="10" textAnchor="middle" className="font-sans">
           {series.map((p, i) => (
             <text key={p.year} x={x(i)} y={PLOT.bottom + 20}>
               {p.year}
@@ -106,13 +106,13 @@ export function ForecastChart({ series }: { series: ForecastPoint[] }) {
         </g>
 
         <g transform={`translate(${PLOT.right - 88},0)`}>
-          <rect width="88" height="23" rx="11.5" fill="var(--color-forest)" />
-          <text x="44" y="15.5" fill="var(--color-cream)" fontSize="12" textAnchor="middle" className="font-sans">
+          <rect width="88" height="23" rx="11.5" fill="var(--color-primary)" />
+          <text x="44" y="15.5" fill="var(--color-on-primary)" fontSize="12" textAnchor="middle" className="font-sans">
             {money(last.valueCents)}
           </text>
         </g>
 
-        <text x={PLOT.left} y="216" fill="var(--color-muted)" fontSize="9.5" className="font-sans">
+        <text x={PLOT.left} y="216" fill="var(--color-text-muted)" fontSize="9.5" className="font-sans">
           Projected at current contribution rates
         </text>
       </svg>

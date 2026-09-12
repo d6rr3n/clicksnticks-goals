@@ -49,7 +49,7 @@ export function Field({
         </p>
       )}
       {error && (
-        <p id={errorId} role="alert" className="text-[11.5px] font-medium text-terracotta-deep">
+        <p id={errorId} role="alert" className="text-[11.5px] font-medium text-warning">
           {error}
         </p>
       )}
@@ -57,7 +57,20 @@ export function Field({
   );
 }
 
+/**
+ * Shared control styling. Deliberately does NOT set outline-none: doing so
+ * silently removed the global focus ring from every input, select and
+ * textarea in the app.
+ */
+/**
+ * Chromium focuses a date input's inner segments rather than the control, so
+ * :focus-visible never matches the element itself. focus-within is scoped to
+ * date fields only, so mouse users don't get a ring on every text field.
+ */
+export const dateInputClass = (invalid?: boolean) =>
+  `${inputClass(invalid)} focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-secondary`;
+
 export const inputClass = (invalid?: boolean) =>
-  `w-full rounded-[10px] border bg-surface px-3.5 py-2.5 text-[14px] text-forest outline-none transition-colors placeholder:text-muted/60 ${
-    invalid ? "border-terracotta-deep" : "border-line focus:border-sage-deep"
+  `w-full rounded-[10px] border bg-surface px-3.5 py-2.5 text-[14px] text-primary transition-colors placeholder:text-muted/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary ${
+    invalid ? "border-warning" : "border-border focus:border-secondary"
   }`;

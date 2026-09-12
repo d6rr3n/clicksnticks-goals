@@ -21,7 +21,7 @@ export function Celebration() {
     <div
       role="status"
       aria-live="polite"
-      className="relative overflow-hidden rounded-panel bg-forest px-6 py-6 text-cream"
+      className="on-dark relative overflow-hidden rounded-panel bg-primary px-6 py-6 text-on-primary"
     >
       <div
         aria-hidden
@@ -33,18 +33,18 @@ export function Celebration() {
       />
       <div className="relative flex flex-wrap items-center justify-between gap-5">
         <div className="flex items-center gap-4">
-          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-sage-light">
-            <CheckIcon className="h-6 w-6 text-forest" />
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-tint-soft">
+            <CheckIcon className="h-6 w-6 text-primary" />
           </span>
           <div>
-            <p className="text-[10px] font-medium tracking-[0.2em] text-sage-light">
+            <p className="text-[10px] font-medium tracking-[0.2em] text-tint-soft">
               GOAL ACHIEVED
             </p>
             <h2 className="mt-1 font-display text-[26px] leading-tight font-semibold">
               {goal.emoji ? `${goal.emoji} ` : ""}
               {goal.name} is fully funded.
             </h2>
-            <p className="mt-1 text-[13px] text-cream/80">
+            <p className="mt-1 text-[13px] text-on-primary/80">
               {money(goal.targetCents)} saved. It stays on your dashboard — history and all.
             </p>
           </div>

@@ -3,10 +3,10 @@ import Link from "next/link";
 type Variant = "primary" | "secondary" | "ghost" | "danger";
 
 const VARIANT: Record<Variant, string> = {
-  primary: "bg-forest text-cream hover:bg-sage-deep",
-  secondary: "bg-surface text-forest border border-line hover:bg-canvas",
-  ghost: "text-sage-deep hover:bg-sage-light/40",
-  danger: "bg-terracotta-deep text-cream hover:bg-terracotta",
+  primary: "bg-primary text-on-primary hover:bg-secondary",
+  secondary: "bg-surface text-primary border border-border hover:bg-background",
+  ghost: "text-secondary hover:bg-tint-soft/40",
+  danger: "bg-warning text-on-primary hover:bg-accent",
 };
 
 const BASE =

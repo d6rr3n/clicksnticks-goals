@@ -35,17 +35,36 @@ scripts/         test resolver hook
 reference/       approved design assets and the palette they define
 ```
 
-## Design
+## Editions
 
-`reference/README.md` is the source of truth for colour — the Sage/Botanical
-GOALS colourway. Two rules the code enforces:
+One engine, one component system, one calculation engine, one data model, with
+interchangeable visual themes. Components reference **semantic tokens only** —
+`primary`, `secondary`, `accent`, `surface`, `success`, `warning`, `border` and
+so on. No component holds a colour.
 
-- **Mid sage is never a progress fill.** At 2.25:1 against the track it does not
-  read as a bar. Fills use `sage-deep`, `forest` or `terracotta-deep`.
-- **Colour never carries status alone.** `sage-deep` and `terracotta-deep` sit
-  1.11:1 apart in luminance, so every status also carries a label and an icon.
+Each edition is one block of custom properties in `src/app/globals.css`:
 
-Palette lives in `src/app/globals.css` as Tailwind v4 `@theme` tokens.
+- **Sage Edition** — default, the shipping product
+- **Blush Edition** — the rose treatment, preserved for a future release
+
+Switch by changing `EDITION` in `src/app/layout.tsx`, which sets `data-edition`
+on `<html>`. An edition changes no calculation, no stored data, no navigation
+and no behaviour. Adding one means adding one selector block and nothing else.
+
+`reference/README.md` holds the approved palette and its measured contrast.
+Two rules the code enforces:
+
+- **Decorative tints are never text and never progress fills.** Sage, Soft Peach
+  and Warm Beige all fall under 3:1. Fills use `success`, `warning` or `primary`.
+- **Colour never carries status alone.** Success and warning sit 1.31:1 apart in
+  luminance, so every status also carries a label and an icon.
+
+## Goal artwork
+
+A goal renders, in order: the user's photograph (stored on-device in IndexedDB),
+otherwise a category illustration drawn as inline SVG from edition tokens. The
+illustration themes with the product, needs no network request, and cannot fail
+to load, so a missing image never breaks the layout.
 
 ## How the data works
 

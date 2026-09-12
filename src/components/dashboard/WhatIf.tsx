@@ -50,27 +50,27 @@ export function WhatIf({
   );
 
   return (
-    <div className="relative flex flex-col gap-3.5 overflow-hidden rounded-panel bg-forest p-5 text-cream">
+    <div className="on-dark relative flex flex-col gap-3.5 overflow-hidden rounded-panel bg-primary p-5 text-on-primary">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-[30%] -inset-y-[30%] top-auto h-[70%]"
         style={{
           background:
-            "radial-gradient(52% 62% at 50% 100%, rgba(164,181,175,.26), transparent 70%)",
+            "radial-gradient(52% 62% at 50% 100%, rgb(var(--edition-wash-b) / .26), transparent 70%)",
         }}
       />
       <h2 className="relative flex items-center gap-2 font-display text-[21px] font-semibold">
-        <SparkIcon className="h-[17px] w-[17px] text-sage" />
+        <SparkIcon className="h-[17px] w-[17px] text-tint" />
         What If?
       </h2>
-      <p className="relative text-[12.5px] leading-snug text-cream/75">
+      <p className="relative text-[12.5px] leading-snug text-on-primary/75">
         See how small changes make a big difference.
       </p>
 
-      <div className="relative flex flex-col gap-3 rounded-card border border-sage-light/20 bg-cream/7 p-3.5">
+      <div className="relative flex flex-col gap-3 rounded-card border border-tint-soft/20 bg-on-primary/7 p-3.5">
         <div className="flex items-center justify-between text-[12.5px]">
           <label htmlFor="extra-per-month">Add extra per month</label>
-          <b className="tabular text-base font-medium text-sage-light">{money(extra)}</b>
+          <b className="tabular text-base font-medium text-tint-soft">{money(extra)}</b>
         </div>
 
         <input
@@ -81,15 +81,20 @@ export function WhatIf({
           step={10_00}
           value={extra}
           onChange={(e) => setExtra(Number(e.target.value))}
-          className="h-1 w-full appearance-none rounded-full outline-none [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-[3px] [&::-moz-range-thumb]:border-sage-deep [&::-moz-range-thumb]:bg-cream [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-[3px] [&::-webkit-slider-thumb]:border-sage-deep [&::-webkit-slider-thumb]:bg-cream"
+          className="h-6 w-full cursor-pointer appearance-none bg-origin-content focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-tint [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-[3px] [&::-moz-range-thumb]:border-secondary [&::-moz-range-thumb]:bg-on-primary [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-[3px] [&::-webkit-slider-thumb]:border-secondary [&::-webkit-slider-thumb]:bg-on-primary"
           style={{
-            background: `linear-gradient(90deg, var(--color-sage) 0 ${(extra / 160_00) * 100}%, rgba(247,242,236,.20) ${(extra / 160_00) * 100}%)`,
+            // The bar stays 4px; the element is 24px tall so it can be tapped.
+            background: `linear-gradient(90deg, var(--color-tint) 0 ${(extra / 160_00) * 100}%, rgb(from var(--edition-on-primary) r g b / .20) ${(extra / 160_00) * 100}%)`,
+            backgroundSize: "100% 4px",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            borderRadius: "999px",
           }}
         />
 
         <div className="flex items-end justify-between gap-3">
           <div>
-            <p className="text-[11.5px] text-cream/70">
+            <p className="text-[11.5px] text-on-primary/70">
               {anyUnfinished ? "Reach your goals" : "Everything is funded"}
             </p>
             <p className="mt-0.5 font-display text-[19px]">
@@ -102,8 +107,8 @@ export function WhatIf({
                     : `${months} month${months === 1 ? "" : "s"} earlier`}
             </p>
           </div>
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-sage-deep">
-            <ArrowRightIcon className="h-[15px] w-[15px] text-cream" />
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-secondary">
+            <ArrowRightIcon className="h-[15px] w-[15px] text-on-primary" />
           </span>
         </div>
       </div>

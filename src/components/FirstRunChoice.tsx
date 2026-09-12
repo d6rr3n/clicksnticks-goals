@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "./ui/Button";
+import { BotanicalCorner } from "./Botanical";
 import { ArrowRightIcon, TargetIcon } from "./icons";
 import { useGoals } from "@/lib/store/GoalsStore";
 
@@ -12,13 +13,15 @@ export function FirstRunChoice() {
   const { chooseMode } = useGoals();
 
   return (
-    <section className="rounded-panel bg-surface px-6 py-12 shadow-[0_1px_2px_rgba(36,28,27,.05),0_8px_24px_-12px_rgba(36,28,27,.18)]">
+    <section className="relative overflow-hidden rounded-panel bg-surface px-6 py-12 elevated">
+      <BotanicalCorner className="absolute -top-4 -right-4 h-56 w-auto text-secondary opacity-45" />
+      <BotanicalCorner flip className="absolute -bottom-6 -left-6 h-48 w-auto text-secondary opacity-30" />
       <div className="mx-auto flex max-w-[46ch] flex-col items-center text-center">
-        <span className="grid h-12 w-12 place-items-center rounded-full bg-sage-light">
-          <TargetIcon className="h-6 w-6 text-forest" />
+        <span className="grid h-12 w-12 place-items-center rounded-full bg-tint-soft">
+          <TargetIcon className="h-6 w-6 text-primary" />
         </span>
 
-        <p className="mt-5 text-[10px] font-medium tracking-[0.2em] text-sage-deep">
+        <p className="mt-5 text-[10px] font-medium tracking-[0.2em] text-secondary">
           WELCOME TO GOALS
         </p>
         <h1 className="mt-2 font-display text-[clamp(28px,4vw,38px)] leading-tight font-semibold text-balance">

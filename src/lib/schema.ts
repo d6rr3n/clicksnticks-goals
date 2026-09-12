@@ -72,7 +72,11 @@ export interface Goal {
   notes?: string;
   /** Key into the IndexedDB image store. */
   imageId?: string;
-  /** Tailwind gradient used when there is no image. */
+  /**
+   * Legacy gradient from before goal artwork existed. Read by nothing —
+   * artwork is derived from the category. Kept so older saved data still
+   * parses rather than being rejected.
+   */
   thumb?: string;
   /** ISO timestamp. */
   createdAt: string;

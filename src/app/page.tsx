@@ -15,6 +15,7 @@ import { TodaysFocus } from "@/components/dashboard/TodaysFocus";
 import { WhatIf } from "@/components/dashboard/WhatIf";
 import { ButtonLink } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
+import { BotanicalSprig } from "@/components/Botanical";
 import { HeartIcon, PlusIcon, TrophyIcon } from "@/components/icons";
 import { useGoals, useNow } from "@/lib/store/GoalsStore";
 import { dashboardTotals, forecastSeries, isComplete, percentComplete } from "@/lib/calc";
@@ -52,6 +53,7 @@ export default function DashboardPage() {
       {live.length === 0 ? (
         <Panel title="Your Goals">
           <div className="flex flex-col items-start gap-4 py-6">
+            <BotanicalSprig className="h-20 w-auto text-secondary opacity-35" />
             <p className="max-w-[46ch] text-[13.5px] leading-relaxed text-muted">
               Nothing here yet. Add your first goal — a house deposit, a trip, a
               rainy-day fund — and the dashboard fills in around it.
@@ -102,7 +104,7 @@ export default function DashboardPage() {
           <section className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_1fr_0.86fr]">
             <Panel
               title="Challenges"
-              icon={<TrophyIcon className="h-4 w-4 text-sage-deep" />}
+              icon={<TrophyIcon className="h-4 w-4 text-secondary" />}
               subtitle="Make saving fun."
               action={{ href: "/challenges", label: "View all" }}
             >
@@ -113,12 +115,13 @@ export default function DashboardPage() {
               <ActivityList goals={data.goals} contributions={data.contributions} />
             </Panel>
 
-            <Panel title="Motivation" icon={<HeartIcon className="h-4 w-4 text-sage-deep" />}>
-              <figure className="m-0 flex flex-col gap-3">
-                <blockquote className="m-0 text-center font-display text-[19px] leading-snug italic text-forest">
+            <Panel title="Motivation" icon={<HeartIcon className="h-4 w-4 text-secondary" />}>
+              <figure className="relative m-0 flex flex-col gap-3">
+                <BotanicalSprig className="pointer-events-none absolute -top-1 -right-2 h-16 w-auto text-secondary opacity-30" />
+                <blockquote className="m-0 text-center font-display text-[19px] leading-snug italic text-primary">
                   &ldquo;{MOTIVATION.quote}&rdquo;
                 </blockquote>
-                <span aria-hidden className="mx-auto h-[1.5px] w-11 bg-sage" />
+                <span aria-hidden className="mx-auto h-[1.5px] w-11 bg-tint" />
                 <figcaption className="text-center text-[11.5px] text-muted">
                   {MOTIVATION.attrib}
                 </figcaption>
@@ -126,11 +129,11 @@ export default function DashboardPage() {
             </Panel>
           </section>
 
-          <p className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-card bg-surface px-5 py-3 text-[11px] text-muted shadow-[0_1px_2px_rgba(23,46,44,.05),0_8px_24px_-12px_rgba(23,46,44,.18)]">
-            <b className="text-[9.5px] font-medium tracking-[0.1em] text-forest">STATUS KEY</b>
-            <span><i className="mr-1.5 inline-block h-2.5 w-2.5 rounded-[3px] bg-sage-deep align-[-1px]" />On track</span>
-            <span><i className="mr-1.5 inline-block h-2.5 w-2.5 rounded-[3px] bg-terracotta-deep align-[-1px]" />Behind — also marked with a warning icon</span>
-            <span><i className="mr-1.5 inline-block h-2.5 w-2.5 rounded-[3px] bg-forest align-[-1px]" />Complete — also marked with a tick</span>
+          <p className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-card bg-surface px-5 py-3 text-[11px] text-muted elevated">
+            <b className="text-[9.5px] font-medium tracking-[0.1em] text-primary">STATUS KEY</b>
+            <span><i className="mr-1.5 inline-block h-2.5 w-2.5 rounded-[3px] bg-success align-[-1px]" />On track</span>
+            <span><i className="mr-1.5 inline-block h-2.5 w-2.5 rounded-[3px] bg-warning align-[-1px]" />Behind — also marked with a warning icon</span>
+            <span><i className="mr-1.5 inline-block h-2.5 w-2.5 rounded-[3px] bg-primary align-[-1px]" />Complete — also marked with a tick</span>
             <span className="ml-auto">Colour never carries status alone.</span>
           </p>
         </>

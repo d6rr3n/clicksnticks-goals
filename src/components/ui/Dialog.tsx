@@ -42,7 +42,7 @@ export function Dialog({
         // Clicking the backdrop, i.e. the dialog element itself, closes it.
         if (e.target === ref.current) onClose();
       }}
-      className="m-auto w-[min(92vw,460px)] rounded-panel border border-line bg-surface p-0 text-forest backdrop:bg-forest/45"
+      className="m-auto w-[min(92vw,460px)] rounded-panel border border-border bg-surface p-0 text-primary backdrop:bg-primary/45"
     >
       <div className="flex flex-col gap-4 p-6">
         <div className="flex flex-col gap-1.5">

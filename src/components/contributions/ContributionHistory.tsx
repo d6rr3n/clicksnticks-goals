@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "../ui/Button";
 import { Dialog } from "../ui/Dialog";
-import { Field, inputClass } from "../ui/Field";
+import { dateInputClass, Field, inputClass } from "../ui/Field";
 import { MinusIcon, PlusIcon } from "../icons";
 import { useGoals } from "@/lib/store/GoalsStore";
 import { runningBalances } from "@/lib/calc";
@@ -55,7 +55,7 @@ export function ContributionHistory({ goal }: { goal: Goal }) {
             </tr>
           </thead>
           <tbody>
-            <tr className="border-t border-line text-[12.5px] text-muted">
+            <tr className="border-t border-border text-[12.5px] text-muted">
               <td className="py-2.5">Starting balance</td>
               <td className="py-2.5">—</td>
               <td className="tabular py-2.5 text-right">{moneyExact(goal.openingBalanceCents)}</td>
@@ -64,7 +64,7 @@ export function ContributionHistory({ goal }: { goal: Goal }) {
             {rows.map((row) => {
               const deposit = row.amountCents > 0;
               return (
-                <tr key={row.id} className="border-t border-line align-middle">
+                <tr key={row.id} className="border-t border-border align-middle">
                   <td className="tabular py-2.5 text-[12.5px] whitespace-nowrap">
                     {fullDate(row.date)}
                     {row.note && (
@@ -75,18 +75,18 @@ export function ContributionHistory({ goal }: { goal: Goal }) {
                     <span className="flex items-center gap-2">
                       <span
                         className={`grid h-6 w-6 shrink-0 place-items-center rounded-full ${
-                          deposit ? "bg-sage-light" : "bg-blush"
+                          deposit ? "bg-tint-soft" : "bg-warm"
                         }`}
                       >
                         {deposit ? (
-                          <PlusIcon className="h-3 w-3 text-forest" />
+                          <PlusIcon className="h-3 w-3 text-primary" />
                         ) : (
-                          <MinusIcon className="h-3 w-3 text-terracotta-deep" />
+                          <MinusIcon className="h-3 w-3 text-warning" />
                         )}
                       </span>
                       <span
                         className={`tabular text-[13px] font-medium ${
-                          deposit ? "" : "text-terracotta-deep"
+                          deposit ? "" : "text-warning"
                         }`}
                       >
                         {signedMoney(row.amountCents)}
@@ -100,14 +100,14 @@ export function ContributionHistory({ goal }: { goal: Goal }) {
                     <button
                       type="button"
                       onClick={() => setEditing(row)}
-                      className="rounded px-2 py-1 text-[11.5px] text-sage-deep hover:underline"
+                      className="inline-flex min-h-[28px] items-center rounded px-2 py-1 text-[11.5px] text-secondary hover:underline"
                     >
                       Edit<span className="sr-only"> contribution of {signedMoney(row.amountCents)} on {fullDate(row.date)}</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setDeleting(row)}
-                      className="rounded px-2 py-1 text-[11.5px] text-terracotta-deep hover:underline"
+                      className="inline-flex min-h-[28px] items-center rounded px-2 py-1 text-[11.5px] text-warning hover:underline"
                     >
                       Delete<span className="sr-only"> contribution of {signedMoney(row.amountCents)} on {fullDate(row.date)}</span>
                     </button>
@@ -216,7 +216,7 @@ function EditDialog({
               {...p}
               type="date"
               max={toISODate(new Date())}
-              className={inputClass(Boolean(errors.date))}
+              className={dateInputClass(Boolean(errors.date))}
               value={date}
               onChange={(e) => setDate(e.target.value)}
             />

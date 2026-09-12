@@ -10,43 +10,55 @@ Visual reference material for Clicks'n'Ticks GOALS. Design only — no applicati
 | `02-GOALS-SAGE-PALETTE.jpg` | JPEG | 1080 × 1233 | Sage / camel / terracotta material moodboard |
 | `03-CLICKSNTICKS-LOGO.png` | PNG | 2120 × 742 | Master brand logo — dusty rose on cream |
 
-## Palette — the GOALS colourway
+## Palette — Clicks'n'Ticks GOALS, Sage Edition
 
 **Authority: `01-GOALS-APPROVED-DASHBOARD.png` and `02-GOALS-SAGE-PALETTE.jpg`.**
-GOALS uses the Sage/Botanical identity. The Clicks'n'Ticks logo remains the
-master brand mark and is adapted to this palette; the master brand's dusty rose
-does **not** override the GOALS colourway.
+The Sage/Botanical identity is the shipping GOALS product. The Clicks'n'Ticks
+logo remains the master brand mark, adapted to this palette; the master brand's
+dusty rose does not override the GOALS colourway.
 
-### Colourway — sampled from `01`
+### Approved colourway
 
-| Token | Hex | On canvas | Role |
-| --- | --- | --- | --- |
-| `forest` | `#172E2C` | 12.37:1 | Sidebar, What If card, complete state |
-| `forest-hi` | `#2A403B` | 7.20:1 | Active nav item |
-| `sage` | `#A4B5AF` | 1.85:1 | On Track tile, decorative — never text |
-| `sage-light` | `#BDC7BF` | — | Total Saved tile, deposit markers |
-| `sage-deep` | `#4A6B5E` | 5.09:1 | On-track fill, links, icons |
-| `blush` | `#E3D3C7` | 1.26:1 | Active Goals tile, Today's Focus |
-| `terracotta` | `#9B674F` | 4.07:1 | Projected Value tile |
-| `terracotta-deep` | `#8B4D31` | 5.65:1 | Behind state, debits |
-| `cream` | `#F7F2EC` | — | Text on dark surfaces |
-| `canvas` | `#EFE9E3` | — | Page ground |
-| `surface` | `#F8F4F0` | — | Panels and cards |
-| `track` | `#E3DBD3` | — | Progress track |
-| `muted` | `#6A625C` | 5.15:1 | Secondary text |
+| Name | Hex | Semantic token | On background | Role |
+| --- | --- | --- | --- | --- |
+| Primary Forest | `#022825` | `primary` | 14.25:1 | Sidebar, dark cards, complete state |
+| Muted Eucalyptus | `#4A6C6A` | `secondary` / `success` | 5.21:1 | On-track, links, icons |
+| Terracotta | `#864026` | `accent` / `warning` | 6.85:1 | Behind state, Projected Value tile |
+| Soft Peach | `#CA8663` | `accent-soft` | 2.68:1 | Decoration only |
+| Sage | `#96B0A4` | `tint` | 2.10:1 | Decoration only |
+| Warm Beige | `#DBBC9E` | `warm` | 1.62:1 | Decoration only |
 
-### Rules this palette must follow
+Supporting surfaces, derived: background `#F2EDE5`, surface `#FCFAF6`,
+track `#E7DCCB`, border `#E2D8C8`, text `#1B2523`, muted text `#6B635A`.
 
-1. **Mid `sage` is never a progress fill.** At 2.25:1 against `track` it does not
-   read as a bar. Fills use `sage-deep`, `forest` or `terracotta-deep`.
-2. **Colour never carries status alone.** `sage-deep` and `terracotta-deep` sit
-   **1.11:1** apart in luminance — indistinguishable to many viewers with colour
-   vision deficiency. Every status also carries a label and an icon.
-3. **Mid `sage` and `blush` are never text colours** — both under 2:1 on canvas.
+### Rules the code enforces
 
-### Master brand reference — from `03`
+1. **Sage, Soft Peach and Warm Beige are never text and never progress fills.**
+   All three fall under 3:1 on the background, and under 2.2:1 against the
+   track. Fills only ever use `success`, `warning` or `primary`.
+2. **Colour never carries status alone.** Success and warning sit **1.31:1**
+   apart in luminance in Sage, and 1.11:1 in Blush — indistinguishable to many
+   viewers with colour vision deficiency. Every status also carries a label and
+   an icon.
+3. **No component holds a colour.** Components reference semantic tokens only.
 
-Logo colours, retained for brand documents. Not used in the GOALS UI.
+## Editions
+
+One engine, one component system, one calculation engine, one data model, with
+interchangeable visual editions. Each edition is a single block of custom
+properties in `src/app/globals.css`; switching sets `data-edition` on `<html>`.
+
+| Edition | Status | Character |
+| --- | --- | --- |
+| **Sage** | Default, shipping | Forest structure, sage and eucalyptus support, terracotta and soft peach accents, warm beige ground |
+| **Blush** | Preserved, not default | The rose treatment, kept whole so it can become a separate edition |
+
+An edition changes no calculation, no stored data, no navigation and no
+behaviour. Adding one means adding one selector block and nothing else.
+
+## Master brand reference — from `03`
+
+Logo colours, for brand documents. Not the GOALS UI palette.
 
 | Role | Hex |
 | --- | --- |
@@ -55,7 +67,7 @@ Logo colours, retained for brand documents. Not used in the GOALS UI.
 | Brand cream | `#FAF5EF` |
 | Ink | `#111111` |
 
-### Moodboard tones — from `02`
+## Moodboard tones — from `02`
 
 | Token | Hex |
 | --- | --- |
@@ -69,6 +81,15 @@ Logo colours, retained for brand documents. Not used in the GOALS UI.
 
 Playfair Display (display) with Jost (UI/body), matching the logo's
 serif-and-geometric pairing, pending confirmation of the original brand faces.
+
+## Goal artwork
+
+Goal cards and the goal detail hero support a user-selected photograph, stored
+on the device in IndexedDB. Where there is no photograph, a category
+illustration is drawn as inline SVG from edition tokens — so it themes with the
+product, needs no network request, and cannot fail to load.
+
+Photography that would improve the product is listed in the project README.
 
 ## Open item
 

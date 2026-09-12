@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "../ui/Button";
-import { Field, inputClass } from "../ui/Field";
+import { dateInputClass, Field, inputClass } from "../ui/Field";
 import { PlusIcon } from "../icons";
 import { useGoals } from "@/lib/store/GoalsStore";
 import { isComplete } from "@/lib/calc";
@@ -95,9 +95,9 @@ export function QuickAdd({
             key={cents}
             type="button"
             onClick={() => record(cents)}
-            className="tabular inline-flex items-center gap-1.5 rounded-full border border-sage-deep/30 bg-sage-light/50 px-4 py-2.5 text-[13.5px] font-medium text-forest transition-colors hover:border-sage-deep hover:bg-sage-light"
+            className="tabular inline-flex items-center gap-1.5 rounded-full border border-secondary/30 bg-tint-soft/50 px-4 py-2.5 text-[13.5px] font-medium text-primary transition-colors hover:border-secondary hover:bg-tint-soft"
           >
-            <PlusIcon className="h-3.5 w-3.5 text-sage-deep" />
+            <PlusIcon className="h-3.5 w-3.5 text-secondary" />
             {money(cents)}
           </button>
         ))}
@@ -124,7 +124,7 @@ export function QuickAdd({
                 {...p}
                 type="date"
                 max={toISODate(new Date())}
-                className={inputClass(Boolean(errors.date))}
+                className={dateInputClass(Boolean(errors.date))}
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
               />
@@ -137,7 +137,7 @@ export function QuickAdd({
         </Button>
       </form>
 
-      <p role="status" aria-live="polite" className="min-h-[1.2em] text-[12.5px] text-sage-deep">
+      <p role="status" aria-live="polite" className="min-h-[1.2em] text-[12.5px] text-secondary">
         {confirmation}
       </p>
     </div>

@@ -14,10 +14,10 @@ export default function NewGoalPage() {
 
   return (
     <>
-      <header className="rounded-panel bg-gradient-to-br from-[#F6F2EC] via-[#E9EEE8] to-[#D6E0D8] px-6 pt-6 pb-7">
+      <header className="rounded-panel bg-gradient-to-br from-[var(--edition-hero-from)] via-[var(--edition-hero-via)] to-[var(--edition-hero-to)] px-6 pt-6 pb-7">
         <Link
           href="/goals"
-          className="text-[11px] tracking-[0.14em] text-sage-deep no-underline hover:underline"
+          className="inline-flex min-h-[28px] items-center text-[11px] tracking-[0.14em] text-secondary no-underline hover:underline"
         >
           ← MY GOALS
         </Link>

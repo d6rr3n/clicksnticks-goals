@@ -14,8 +14,8 @@ const CHALLENGE = {
 
 export function ChallengeCard() {
   return (
-    <div className="flex items-center gap-3 rounded-card border border-line bg-canvas p-3">
-      <div className="grid h-[74px] w-[74px] shrink-0 place-content-center rounded-xl bg-gradient-to-br from-sage-deep to-forest p-1.5 text-center leading-tight text-cream">
+    <div className="flex items-center gap-3 rounded-card border border-border bg-background p-3">
+      <div className="grid h-[74px] w-[74px] shrink-0 place-content-center rounded-xl bg-gradient-to-br from-secondary to-primary p-1.5 text-center leading-tight text-on-primary">
         <b className="font-display text-2xl font-semibold">{CHALLENGE.totalWeeks}</b>
         <span className="text-[8.5px] tracking-[0.1em]">
           WEEK
