@@ -58,12 +58,17 @@ export const archiveGoal = (data: Dataset, id: string, now = new Date()): Datase
 export const restoreGoal = (data: Dataset, id: string, now = new Date()): Dataset =>
   updateGoal(data, id, { archivedAt: null }, now);
 
-/** Deletes the goal and its entire ledger — nothing is left orphaned. */
+/**
+ * Deletes the goal and its entire ledger — nothing is left orphaned. Its
+ * challenges go with it: their contributions have just been removed, and a
+ * challenge pointing at a goal that no longer exists has nothing to move.
+ */
 export function deleteGoal(data: Dataset, id: string): Dataset {
   return {
     ...data,
     goals: data.goals.filter((g) => g.id !== id),
     contributions: data.contributions.filter((c) => c.goalId !== id),
+    challenges: data.challenges.filter((c) => c.goalId !== id),
     celebrated: data.celebrated.filter((c) => c !== id),
   };
 }

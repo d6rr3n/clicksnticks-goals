@@ -36,6 +36,7 @@ class FakeStorage implements StorageLike {
 
 const sample = (): Dataset => ({
   schemaVersion: SCHEMA_VERSION,
+  challenges: [],
   goals: [
     {
       id: "g1", name: "House", category: "house", targetCents: 100_00,

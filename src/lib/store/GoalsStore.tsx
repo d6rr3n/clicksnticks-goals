@@ -12,7 +12,9 @@ import {
 import { buildDemoDataset } from "../demo";
 import { deleteImage } from "./images";
 import { emptyDataset, type Dataset, type DatasetMode, type Goal } from "../schema";
+import type { ChallengeSpec } from "../challenges";
 import * as m from "./mutations";
+import * as ch from "./challenges";
 import {
   browserStorage,
   clearDataset,
@@ -200,6 +202,25 @@ function useGoalsInternal() {
       ) => commit((d) => m.updateContribution(d, id, patch)),
       deleteContribution: (id: string) => commit((d) => m.deleteContribution(d, id)),
       markCelebrated: (goalId: string) => commit((d) => m.markCelebrated(d, goalId)),
+      addChallenge: (input: ch.NewChallengeInput) =>
+        commit((d) => ch.addChallenge(d, input)),
+      updateChallenge: (
+        id: string,
+        patch: { name?: string; startDate?: string; spec?: ChallengeSpec },
+      ) => commit((d) => ch.updateChallenge(d, id, patch)),
+      archiveChallenge: (id: string) => commit((d) => ch.archiveChallenge(d, id)),
+      restoreChallenge: (id: string) => commit((d) => ch.restoreChallenge(d, id)),
+      /** Removes the challenge and the contributions it recorded. Confirmed first. */
+      deleteChallenge: (id: string) => commit((d) => ch.deleteChallenge(d, id)),
+      /**
+       * Both step actions are safe to call repeatedly: the transitions return
+       * the dataset untouched when there is nothing to do, and `commit` then
+       * skips the write entirely.
+       */
+      completeStep: (challengeId: string, step: number) =>
+        commit((d) => ch.completeStep(d, challengeId, step)),
+      uncompleteStep: (challengeId: string, step: number) =>
+        commit((d) => ch.uncompleteStep(d, challengeId, step)),
     }),
     [],
   );

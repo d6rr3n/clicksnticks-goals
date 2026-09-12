@@ -60,6 +60,7 @@ function parseDataset(raw: string): Dataset | null {
     schemaVersion: typeof d.schemaVersion === "number" ? d.schemaVersion : SCHEMA_VERSION,
     goals: d.goals,
     contributions: d.contributions,
+    challenges: Array.isArray(d.challenges) ? d.challenges : [],
     celebrated: Array.isArray(d.celebrated) ? d.celebrated : [],
   };
 }

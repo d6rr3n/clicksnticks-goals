@@ -156,6 +156,7 @@ export function buildDemoDataset(now: Date = new Date()): Dataset {
     schemaVersion: SCHEMA_VERSION,
     goals,
     contributions,
+    challenges: [],
     // The demo's finished goal opens already celebrated, so the first view
     // matches the approved dashboard rather than a congratulations banner.
     celebrated: goals.filter((g) => g.completedAt).map((g) => g.id),
