@@ -339,23 +339,31 @@ function IneligibleList({
   rows: Array<{ goal: { id: string; name: string; emoji?: string }; reason: unknown }>;
 }) {
   return (
-    <ul className="flex list-none flex-col gap-1 p-0">
-      {rows.map(({ goal, reason }) => (
-        <li key={goal.id} className="flex flex-wrap items-baseline gap-2 text-[12px] text-muted opacity-70">
-          <span>
-            {goal.emoji ? `${goal.emoji} ` : ""}
-            {goal.name}
-          </span>
-          <span>
-            —{" "}
-            {
-              CHALLENGE_INELIGIBILITY_TEXT[
-                reason as keyof typeof CHALLENGE_INELIGIBILITY_TEXT
-              ]
-            }
-          </span>
-        </li>
-      ))}
-    </ul>
+    <div className="flex flex-col gap-1.5">
+      <p className="text-[11px] font-medium tracking-[0.12em] text-muted">
+        NOT AVAILABLE
+      </p>
+      <ul className="flex list-none flex-col gap-1 p-0">
+        {rows.map(({ goal, reason }) => (
+          <li
+            key={goal.id}
+            className="flex flex-wrap items-baseline gap-2 text-[12px] text-muted opacity-70"
+          >
+            <span>
+              {goal.emoji ? `${goal.emoji} ` : ""}
+              {goal.name}
+            </span>
+            <span>
+              —{" "}
+              {
+                CHALLENGE_INELIGIBILITY_TEXT[
+                  reason as keyof typeof CHALLENGE_INELIGIBILITY_TEXT
+                ]
+              }
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

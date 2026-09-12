@@ -85,7 +85,11 @@ export default function ChallengeDetailPage({
           {challenge.name}
         </h1>
         <p className="text-[12.5px] text-muted">
-          {CHALLENGE_TYPE_LABEL[challenge.type]}
+          {/* Most challenges keep their default name, so repeating the type
+              under it would just say the same thing twice. */}
+          {challenge.name === CHALLENGE_TYPE_LABEL[challenge.type]
+            ? "Challenge"
+            : CHALLENGE_TYPE_LABEL[challenge.type]}
           {goal && (
             <>
               {" · saving towards "}
