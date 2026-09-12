@@ -4,7 +4,8 @@ These are approved and signed off. **Do not redesign or rewrite them.** The only
 reason to change locked code is a genuine bug — and then the fix should be the
 smallest one that works, with a regression test.
 
-Checkpoint: `Forecast + What If approved` (tag `checkpoint/forecast-what-if`).
+Checkpoints: `Forecast + What If approved` (tag `checkpoint/forecast-what-if`),
+then `Smart Allocation approved`.
 
 ## Locked at this checkpoint
 
@@ -19,6 +20,9 @@ Checkpoint: `Forecast + What If approved` (tag `checkpoint/forecast-what-if`).
 | Navigation | `src/components/Sidebar.tsx` |
 | Goal CRUD and persistence | `src/lib/store/`, `src/lib/schema.ts` |
 | Date and currency architecture | `src/lib/dates.ts`, `src/lib/money.ts` |
+| Smart Allocation engine | `src/lib/allocate.ts` |
+| Smart Allocation page and apply flow | `src/app/allocate/`, `src/components/allocate/` |
+| Atomic batch write | `addContributions` in `src/lib/store/mutations.ts` |
 
 ## Invariants these systems rely on
 
@@ -64,15 +68,17 @@ codebase only appeared east of UTC.
 Challenges, Calendar, Insights, additional Editions, cloud accounts,
 authentication, bank connections, notifications, AI features.
 
-## Smart Allocation (built, pending review)
+## The one tunable number
 
-| System | Where it lives |
-| --- | --- |
-| Allocation engine | `src/lib/allocate.ts` |
-| Smart Allocation page | `src/app/allocate/`, `src/components/allocate/` |
-| Atomic batch write | `addContributions` in `src/lib/store/mutations.ts` |
+`CATCH_UP_SHARE` in `src/lib/allocate.ts` is **product policy, not a financial
+rule**. No arithmetic makes 70% correct — it is a decision about how the plan
+should feel, approved for V1 and meant to be tuned. Raising it sends more to
+struggling goals; lowering it spreads the plan more evenly. Nothing else
+depends on the value, so changing it alters emphasis, never correctness.
 
-Additional invariants:
+Everything else in this file is an invariant. This one is a dial.
+
+## Smart Allocation invariants
 
 12. **Target size is never an allocation factor.** Weight decides the share;
     need caps it.

@@ -215,6 +215,7 @@ export default function AllocatePage() {
                       <AllocationRow
                         key={allocation.goalId}
                         allocation={allocation}
+                        plan={plan}
                         onChange={
                           allocation.eligible
                             ? (cents) => adjust(allocation.goalId, cents)

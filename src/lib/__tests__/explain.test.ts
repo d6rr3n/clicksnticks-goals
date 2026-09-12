@@ -301,3 +301,79 @@ describe("smart allocation in words", () => {
     }
   });
 });
+
+describe("why a goal got a share of this particular plan", () => {
+  const catchUp = makeGoal({
+    id: "car", name: "New Car", targetCents: 25_000_00, openingBalanceCents: 8_100_00,
+    contributionCents: 120_00, frequency: "monthly", targetDate: "2028-01-12",
+    priority: "low",
+  });
+  const priority = makeGoal({
+    id: "house", name: "House Deposit", targetCents: 50_000_00, openingBalanceCents: 31_450_00,
+    contributionCents: 200_00, frequency: "weekly", targetDate: "2028-08-12",
+    priority: "high",
+  });
+  const second = makeGoal({
+    id: "boat", name: "Boat", targetCents: 40_000_00, openingBalanceCents: 0,
+    contributionCents: 50_00, frequency: "monthly", targetDate: "2027-06-12",
+    priority: "low",
+  });
+
+  const reasonFor = (goals: typeof catchUp[], id: string) => {
+    const plan = smartAllocate(goals, [], 1000_00, NOW);
+    return explainAllocation(plan.allocations.find((a) => a.goalId === id)!, plan);
+  };
+
+  test("names the goal that is actually catching up", () => {
+    const s = reasonFor([priority, catchUp], "house");
+    assert.match(s, /high-priority goal/);
+    assert.match(s, /while New Car catches up/);
+    noJargon(s);
+  });
+
+  test("the named goal is derived, never hardcoded", () => {
+    const renamed = makeGoal({ ...catchUp, id: "car", name: "Camper Van" });
+    const s = reasonFor([priority, renamed], "house");
+    assert.match(s, /while Camper Van catches up/);
+    assert.ok(!s.includes("New Car"), s);
+  });
+
+  test("generalises when more than one goal is catching up", () => {
+    const s = reasonFor([priority, catchUp, second], "house");
+    assert.match(s, /while your behind-schedule goals catch up/);
+    assert.ok(!/New Car|Boat/.test(s), s);
+    noJargon(s);
+  });
+
+  test("falls back sensibly when nothing is behind", () => {
+    const comfortable = makeGoal({
+      id: "easy", name: "Easy", targetCents: 1000_00, openingBalanceCents: 0,
+      contributionCents: 900_00, frequency: "monthly", targetDate: "2030-01-12",
+      priority: "medium",
+    });
+    const plan = smartAllocate([priority, comfortable], [], 1000_00, NOW);
+    const a = plan.allocations.find((x) => x.goalId === "house")!;
+    if (a.reason === "high-priority") {
+      const s = explainAllocation(a, plan);
+      assert.match(s, /larger share of what's available/);
+      assert.ok(!/catches up|catch up/.test(s), s);
+      noJargon(s);
+    }
+  });
+
+  test("a goal never says it is waiting for itself", () => {
+    const plan = smartAllocate([priority, catchUp], [], 1000_00, NOW);
+    for (const a of plan.allocations) {
+      const s = explainAllocation(a, plan);
+      assert.ok(!s.includes(`while ${a.name} catches up`), `${a.name}: ${s}`);
+    }
+  });
+
+  test("without the plan it still reads sensibly", () => {
+    const plan = smartAllocate([priority, catchUp], [], 1000_00, NOW);
+    const a = plan.allocations.find((x) => x.goalId === "house")!;
+    const s = explainAllocation(a);
+    noJargon(s);
+    assert.ok(s.length > 0);
+  });
+});

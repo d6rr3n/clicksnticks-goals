@@ -61,13 +61,29 @@ const scheduleWeight = (behind: boolean, comfortablyAhead: boolean): number =>
 const AHEAD_MONTHS = 3;
 
 /**
- * The most of the money that the catch-up pass may take.
+ * PRODUCT POLICY, NOT A FINANCIAL RULE — the most of the money that the
+ * catch-up pass may take.
  *
- * Goals that are behind get stronger weighting, not absolute priority. Without
- * this cap a single badly-behind goal absorbs everything — its catch-up need
- * can be many times the amount available — and every other goal is handed
- * nothing. Holding back a share means the plan always spreads, which is both
- * more useful and easier to explain.
+ * There is no arithmetic that makes 70% correct. It is a deliberate product
+ * decision about how the plan should feel, approved for V1, and it is meant to
+ * be tuned: raising it sends more money to whichever goals are struggling,
+ * lowering it spreads the plan more evenly. Nothing else in the engine depends
+ * on the value, so changing this number is safe — it changes emphasis, never
+ * correctness.
+ *
+ * What it protects against: goals that are behind get stronger weighting, not
+ * absolute priority. A single badly-behind goal can need many times the amount
+ * available, and without this cap its catch-up need absorbs everything while
+ * every other goal is handed nothing.
+ *
+ * The second, weighted pass then spreads what is left across every eligible
+ * goal — including the behind ones — so a struggling goal can and does end up
+ * with more than this share. The cap bounds the catch-up pass, not the goal.
+ *
+ * Approved V1 behaviour on the demo data, with $1,000 available:
+ *   New Car (behind)        $780
+ *   House Deposit (high)    $120
+ *   Japan Trip (on track)   $100
  */
 const CATCH_UP_SHARE = 0.7;
 

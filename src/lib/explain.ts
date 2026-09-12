@@ -227,7 +227,31 @@ export function portfolioNotes(summary: PortfolioSummary, max = 3): string[] {
  * surfaces as a number — only the fact behind it, so the customer can see
  * that their money followed their own priorities and deadlines.
  */
-export function explainAllocation(allocation: Allocation): string {
+/**
+ * The goals actually being caught up by this plan, other than this one.
+ * Derived from the plan, never hardcoded, so the sentence stays true whichever
+ * goals happen to be behind.
+ */
+function catchingUpNames(
+  plan: AllocationPlan | undefined,
+  exceptGoalId: string,
+): string[] {
+  if (!plan) return [];
+  return plan.allocations
+    .filter(
+      (a) =>
+        a.eligible &&
+        a.factors.behind &&
+        a.amountCents > 0 &&
+        a.goalId !== exceptGoalId,
+    )
+    .map((a) => a.name);
+}
+
+export function explainAllocation(
+  allocation: Allocation,
+  plan?: AllocationPlan,
+): string {
   const { reason, factors, impactMonths, name } = allocation;
 
   switch (reason) {
@@ -259,8 +283,17 @@ export function explainAllocation(allocation: Allocation): string {
         ? `Your nearest deadline — ${describeMonths(factors.monthsToTarget)} away — and currently on track.`
         : "One of your nearer deadlines, and currently on track.";
 
-    case "high-priority":
-      return "A high-priority goal with a way to go yet.";
+    case "high-priority": {
+      // Say why it got a share of *this* allocation, not just what it is.
+      const catchingUp = catchingUpNames(plan, allocation.goalId);
+      if (catchingUp.length === 1) {
+        return `A high-priority goal, so it still gets a share while ${catchingUp[0]} catches up.`;
+      }
+      if (catchingUp.length > 1) {
+        return "A high-priority goal, so it still gets a share while your behind-schedule goals catch up.";
+      }
+      return "A high-priority goal, so it takes a larger share of what's available.";
+    }
 
     case "ahead-of-plan":
       return allocation.amountCents > 0

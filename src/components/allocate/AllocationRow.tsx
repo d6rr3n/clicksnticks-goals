@@ -1,7 +1,7 @@
 "use client";
 
 import { useId } from "react";
-import type { Allocation } from "@/lib/allocate";
+import type { Allocation, AllocationPlan } from "@/lib/allocate";
 import { explainAllocation } from "@/lib/explain";
 import { money, parseAmount, toDollars } from "@/lib/money";
 import { monthYear } from "@/lib/dates";
@@ -17,16 +17,19 @@ import { ArrowRightIcon, CheckIcon } from "../icons";
  */
 export function AllocationRow({
   allocation,
+  plan,
   onChange,
   maxCents,
 }: {
   allocation: Allocation;
+  /** The whole plan, so a reason can refer to the other goals in it. */
+  plan?: AllocationPlan;
   onChange?: (cents: number) => void;
   /** The most this row may take: what the goal needs, or what's left. */
   maxCents?: number;
 }) {
   const id = useId();
-  const reason = explainAllocation(allocation);
+  const reason = explainAllocation(allocation, plan);
 
   if (!allocation.eligible) {
     return (
