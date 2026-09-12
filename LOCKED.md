@@ -65,8 +65,20 @@ codebase only appeared east of UTC.
 
 ## Not yet built
 
-Challenges, Calendar, Insights, additional Editions, cloud accounts,
-authentication, bank connections, notifications, AI features.
+Calendar, Insights, additional Editions, cloud accounts, authentication,
+bank connections, notifications, AI features.
+
+## Built, awaiting product review
+
+Challenges V1. Implemented against the brief in issue #1 and its approved
+planning checkpoint. **Not locked** — nothing in this section is signed off
+until Darren and ChatGPT have reviewed it.
+
+The four additive changes to locked files were approved in that checkpoint
+and are limited to: `schema.ts` (the `Challenge` record, `Contribution.source`,
+`Dataset.challenges`), `storage.ts` (one tolerant array read), `GoalsStore.tsx`
+(action wiring) and `mutations.ts` (challenges cascade in `deleteGoal`).
+Forecast, What If and Smart Allocation are untouched.
 
 ## The one tunable number
 
