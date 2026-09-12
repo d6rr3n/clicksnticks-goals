@@ -4,6 +4,7 @@ import {
   ALLOCATION_NOTE,
   catchUpCents,
   monthsUntil,
+  planFromAmounts,
   plannedContributions,
   shareByWeight,
   smartAllocate,
@@ -502,5 +503,136 @@ describe("timezone behaviour", () => {
   test("an existing ledger is respected", () => {
     const plan = smartAllocate([g], [makeContribution("g", 4000_00, "2026-01-01")], AVAILABLE, NOW);
     assert.equal(got(plan, "g"), 1000_00);
+  });
+});
+
+describe("an adjusted plan", () => {
+  const a = makeGoal({
+    id: "a", name: "A", targetCents: 5000_00, openingBalanceCents: 0,
+    contributionCents: 100_00, frequency: "monthly", targetDate: "2029-09-12",
+  });
+  const b = makeGoal({
+    id: "b", name: "B", targetCents: 5000_00, openingBalanceCents: 0,
+    contributionCents: 100_00, frequency: "monthly", targetDate: "2029-09-12",
+  });
+
+  test("feeding the recommendation back in reproduces it exactly", () => {
+    const recommended = smartAllocate([a, b], [], AVAILABLE, NOW);
+    const amounts = Object.fromEntries(
+      recommended.allocations.map((x) => [x.goalId, x.amountCents]),
+    );
+    const rebuilt = planFromAmounts([a, b], [], amounts, AVAILABLE, NOW);
+    assert.deepEqual(
+      rebuilt.allocations.map((x) => [x.goalId, x.amountCents, x.reason]),
+      recommended.allocations.map((x) => [x.goalId, x.amountCents, x.reason]),
+    );
+    assert.equal(rebuilt.totalAllocatedCents, recommended.totalAllocatedCents);
+  });
+
+  test("a hand-chosen split is honoured", () => {
+    const plan = planFromAmounts([a, b], [], { a: 700_00, b: 300_00 }, AVAILABLE, NOW);
+    assert.equal(got(plan, "a"), 700_00);
+    assert.equal(got(plan, "b"), 300_00);
+    assert.equal(plan.unallocatedCents, 0);
+  });
+
+  test("an amount beyond what a goal needs is trimmed to what it needs", () => {
+    const plan = planFromAmounts([a], [], { a: 99_999_00 }, 99_999_00, NOW);
+    assert.equal(got(plan, "a"), 5000_00);
+  });
+
+  test("a negative amount becomes nothing", () => {
+    const plan = planFromAmounts([a, b], [], { a: -500_00, b: 200_00 }, AVAILABLE, NOW);
+    assert.equal(got(plan, "a"), 0);
+    assert.equal(got(plan, "b"), 200_00);
+  });
+
+  test("underspending leaves the rest visibly unallocated", () => {
+    const plan = planFromAmounts([a, b], [], { a: 100_00, b: 100_00 }, AVAILABLE, NOW);
+    assert.equal(plan.totalAllocatedCents, 200_00);
+    assert.equal(plan.unallocatedCents, 800_00);
+  });
+
+  test("the before/after preview follows the adjusted amounts", () => {
+    const light = planFromAmounts([a], [], { a: 100_00 }, AVAILABLE, NOW);
+    const heavy = planFromAmounts([a], [], { a: 4000_00 }, AVAILABLE, NOW);
+    assert.ok((heavy.allocations[0].impactMonths ?? 0) > (light.allocations[0].impactMonths ?? 0));
+    assert.ok(heavy.after.totalSavedCents > light.after.totalSavedCents);
+  });
+
+  test("ineligible goals cannot be given money by hand", () => {
+    const done = makeGoal({ id: "done", name: "Done", targetCents: 100_00, openingBalanceCents: 100_00 });
+    const plan = planFromAmounts([a, done], [], { a: 0, done: 500_00 }, AVAILABLE, NOW);
+    assert.equal(got(plan, "done"), 0);
+    assert.equal(entry(plan, "done").eligible, false);
+  });
+
+  test("an empty adjustment allocates nothing", () => {
+    const plan = planFromAmounts([a, b], [], {}, AVAILABLE, NOW);
+    assert.equal(plan.totalAllocatedCents, 0);
+    assert.equal(plan.unallocatedCents, AVAILABLE);
+  });
+});
+
+describe("the plan always spreads", () => {
+  /*
+   * A badly-behind goal can need many times the amount available. Without a
+   * cap on the catch-up pass it absorbs everything and every other goal is
+   * handed nothing, which is neither useful nor easy to explain.
+   */
+  const hopeless = makeGoal({
+    id: "hopeless", name: "Hopeless", targetCents: 200_000_00, openingBalanceCents: 0,
+    contributionCents: 100_00, frequency: "monthly", targetDate: "2027-09-12",
+    priority: "medium",
+  });
+  const steady = makeGoal({
+    id: "steady", name: "Steady", targetCents: 5000_00, openingBalanceCents: 0,
+    contributionCents: 300_00, frequency: "monthly", targetDate: "2029-09-12",
+    priority: "medium",
+  });
+  const nearby = makeGoal({
+    id: "nearby", name: "Nearby", targetCents: 3000_00, openingBalanceCents: 0,
+    contributionCents: 400_00, frequency: "monthly", targetDate: "2027-03-12",
+    priority: "medium",
+  });
+
+  test("a goal whose catch-up dwarfs the money does not take all of it", () => {
+    const plan = smartAllocate([hopeless, steady, nearby], [], AVAILABLE, NOW);
+    assert.ok(got(plan, "hopeless") < AVAILABLE,
+      `hopeless took ${got(plan, "hopeless")} of ${AVAILABLE}`);
+    assert.ok(got(plan, "steady") > 0, "steady got nothing");
+    assert.ok(got(plan, "nearby") > 0, "nearby got nothing");
+  });
+
+  test("the behind goals both outrank the comfortable one", () => {
+    // "nearby" is behind too, and due sooner, so it legitimately outranks
+    // "hopeless" — behind plus a near deadline beats behind alone.
+    const plan = smartAllocate([hopeless, steady, nearby], [], AVAILABLE, NOW);
+    assert.equal(entry(plan, "nearby").factors.behind, true);
+    assert.equal(entry(plan, "hopeless").factors.behind, true);
+    assert.equal(entry(plan, "steady").factors.behind, false);
+    assert.ok(got(plan, "hopeless") > got(plan, "steady"));
+    assert.ok(got(plan, "nearby") > got(plan, "steady"));
+  });
+
+  test("every dollar is still accounted for", () => {
+    const plan = smartAllocate([hopeless, steady, nearby], [], AVAILABLE, NOW);
+    assert.equal(plan.totalAllocatedCents + plan.unallocatedCents, AVAILABLE);
+  });
+
+  test("with no behind goals the whole amount still spreads", () => {
+    const plan = smartAllocate([steady, nearby], [], AVAILABLE, NOW);
+    assert.equal(plan.totalAllocatedCents, AVAILABLE);
+    assert.ok(got(plan, "steady") > 0 && got(plan, "nearby") > 0);
+  });
+
+  test("a catch-up that fits comfortably is still fully funded", () => {
+    const nearlyThere = makeGoal({
+      id: "near", name: "Nearly", targetCents: 1000_00, openingBalanceCents: 500_00,
+      contributionCents: 0, targetDate: "2027-01-12", priority: "high",
+    });
+    const plan = smartAllocate([nearlyThere], [], AVAILABLE, NOW);
+    assert.equal(got(plan, "near"), 500_00);
+    assert.equal(entry(plan, "near").completesGoal, true);
   });
 });

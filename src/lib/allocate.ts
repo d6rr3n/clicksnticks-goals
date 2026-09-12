@@ -60,6 +60,17 @@ const scheduleWeight = (behind: boolean, comfortablyAhead: boolean): number =>
 /** A goal counts as comfortably ahead at three clear months of headroom. */
 const AHEAD_MONTHS = 3;
 
+/**
+ * The most of the money that the catch-up pass may take.
+ *
+ * Goals that are behind get stronger weighting, not absolute priority. Without
+ * this cap a single badly-behind goal absorbs everything — its catch-up need
+ * can be many times the amount available — and every other goal is handed
+ * nothing. Holding back a share means the plan always spreads, which is both
+ * more useful and easier to explain.
+ */
+const CATCH_UP_SHARE = 0.7;
+
 /* ── Facts about a goal, computed once ───────────────────────────────────── */
 
 /** Whole months that fit between now and a date. Null when there is no date. */
@@ -260,17 +271,13 @@ export function plannedContributions(
 /** Written onto real contributions when a plan is applied. */
 export const ALLOCATION_NOTE = "Smart Allocation";
 
-export function smartAllocate(
-  goals: Goal[],
-  contributions: Contribution[],
-  availableCents: number,
-  now: Date = new Date(),
-): AllocationPlan {
-  const available = Number.isFinite(availableCents)
-    ? Math.max(Math.floor(availableCents), 0)
-    : 0;
+interface Considered {
+  candidates: Candidate[];
+  excluded: Array<{ goal: Goal; reason: Ineligibility }>;
+}
 
-  /* Who is in, and who is out and why. */
+/** Who is eligible, who is not, and the facts about each. */
+function consider(goals: Goal[], contributions: Contribution[], now: Date): Considered {
   const excluded: Array<{ goal: Goal; reason: Ineligibility }> = [];
   const candidates: Candidate[] = [];
 
@@ -291,8 +298,7 @@ export function smartAllocate(
     const projection = projectionFor(goal, contributions, now);
     const against = monthsAgainstTarget(goal, projection);
     const behind = statusOf(goal, contributions, now) === "behind";
-    const comfortablyAhead =
-      !behind && against !== null && against >= AHEAD_MONTHS;
+    const comfortablyAhead = !behind && against !== null && against >= AHEAD_MONTHS;
     const monthsToTarget = monthsUntil(goal.targetDate, now);
 
     candidates.push({
@@ -327,30 +333,30 @@ export function smartAllocate(
       a.goal.id.localeCompare(b.goal.id),
   );
 
-  /* Pass 1 — help the goals that are behind, up to what they need to catch up. */
-  const behindBuckets: Bucket[] = candidates
-    .filter((c) => c.factors.behind && c.factors.catchUpCents > 0)
-    .map((c) => ({
-      id: c.goal.id,
-      weight: c.weight,
-      cap: Math.min(c.factors.catchUpCents, c.factors.remainingCents),
-    }));
+  return { candidates, excluded };
+}
 
-  const pass1 = distribute(available, behindBuckets);
+/**
+ * Turn a set of amounts into a full plan — the projections on each side, the
+ * reasons, and the portfolio summaries. Shared by the recommendation and by
+ * any amounts the customer has adjusted by hand, so an edited plan is
+ * described exactly as carefully as a suggested one.
+ */
+function buildPlan(
+  goals: Goal[],
+  contributions: Contribution[],
+  considered: Considered,
+  amounts: Map<string, number>,
+  availableCents: number,
+  now: Date,
+): AllocationPlan {
+  const { candidates, excluded } = considered;
 
-  /* Pass 2 — spread what is left, up to what each goal still needs. */
-  const pass2Buckets: Bucket[] = candidates.map((c) => ({
-    id: c.goal.id,
-    weight: c.weight,
-    cap: c.factors.remainingCents - (pass1.assigned.get(c.goal.id) ?? 0),
-  }));
-
-  const pass2 = distribute(pass1.leftover, pass2Buckets);
-
-  /* Build the allocations. */
   const allocations: Allocation[] = candidates.map((c) => {
-    const amountCents =
-      (pass1.assigned.get(c.goal.id) ?? 0) + (pass2.assigned.get(c.goal.id) ?? 0);
+    const amountCents = Math.max(
+      Math.min(amounts.get(c.goal.id) ?? 0, c.factors.remainingCents),
+      0,
+    );
     return {
       goalId: c.goal.id,
       name: c.goal.name,
@@ -363,7 +369,8 @@ export function smartAllocate(
       after: projectionFor(c.goal, contributions, now),
       impactMonths: null,
       backOnTrack: false,
-      completesGoal: amountCents >= c.factors.remainingCents && c.factors.remainingCents > 0,
+      completesGoal:
+        amountCents >= c.factors.remainingCents && c.factors.remainingCents > 0,
     };
   });
 
@@ -382,6 +389,7 @@ export function smartAllocate(
           : null;
     allocation.backOnTrack =
       allocation.factors.behind &&
+      allocation.amountCents > 0 &&
       (allocation.after.kind === "complete" ||
         (allocation.after.kind === "projected" && allocation.after.onTrack));
     allocation.reason = reasonFor(allocation);
@@ -416,15 +424,88 @@ export function smartAllocate(
   const totalAllocatedCents = allocations.reduce((s, a) => s + a.amountCents, 0);
 
   return {
-    availableCents: available,
+    availableCents,
     allocations,
     totalAllocatedCents,
-    unallocatedCents: available - totalAllocatedCents,
+    unallocatedCents: availableCents - totalAllocatedCents,
     before: portfolioSummary(goals, contributions, now),
     after: portfolioSummary(goals, after, now),
     backOnTrackCount: allocations.filter((a) => a.backOnTrack).length,
     monthsSaved: allocations.reduce((s, a) => s + (a.impactMonths ?? 0), 0),
   };
+}
+
+const sanitise = (cents: number): number =>
+  Number.isFinite(cents) ? Math.max(Math.floor(cents), 0) : 0;
+
+/** The recommendation. */
+export function smartAllocate(
+  goals: Goal[],
+  contributions: Contribution[],
+  availableCents: number,
+  now: Date = new Date(),
+): AllocationPlan {
+  const available = sanitise(availableCents);
+  const considered = consider(goals, contributions, now);
+  const { candidates } = considered;
+
+  /* Pass 1 — help the goals that are behind, up to what they need to catch up. */
+  const behindBuckets: Bucket[] = candidates
+    .filter((c) => c.factors.behind && c.factors.catchUpCents > 0)
+    .map((c) => ({
+      id: c.goal.id,
+      weight: c.weight,
+      cap: Math.min(c.factors.catchUpCents, c.factors.remainingCents),
+    }));
+
+  const catchUpPool = Math.floor(available * CATCH_UP_SHARE);
+  const pass1 = distribute(catchUpPool, behindBuckets);
+  const usedOnCatchUp = catchUpPool - pass1.leftover;
+
+  /* Pass 2 — spread everything else, up to what each goal still needs. */
+  const pass2 = distribute(
+    available - usedOnCatchUp,
+    candidates.map((c) => ({
+      id: c.goal.id,
+      weight: c.weight,
+      cap: c.factors.remainingCents - (pass1.assigned.get(c.goal.id) ?? 0),
+    })),
+  );
+
+  const amounts = new Map<string, number>();
+  for (const c of candidates) {
+    amounts.set(
+      c.goal.id,
+      (pass1.assigned.get(c.goal.id) ?? 0) + (pass2.assigned.get(c.goal.id) ?? 0),
+    );
+  }
+
+  return buildPlan(goals, contributions, considered, amounts, available, now);
+}
+
+/**
+ * The same plan shape, from amounts the customer chose. Used when a
+ * recommendation has been adjusted by hand — the before/after preview and the
+ * reasons stay just as accurate.
+ */
+export function planFromAmounts(
+  goals: Goal[],
+  contributions: Contribution[],
+  amountsById: Record<string, number>,
+  availableCents: number,
+  now: Date = new Date(),
+): AllocationPlan {
+  const amounts = new Map<string, number>(
+    Object.entries(amountsById).map(([id, cents]) => [id, sanitise(cents)]),
+  );
+  return buildPlan(
+    goals,
+    contributions,
+    consider(goals, contributions, now),
+    amounts,
+    sanitise(availableCents),
+    now,
+  );
 }
 
 /**
