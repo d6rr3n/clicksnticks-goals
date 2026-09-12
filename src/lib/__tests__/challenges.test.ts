@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   addDays,
   cadenceOf,
+  canEditSchedule,
   challengeImpact,
   challengeIneligibility,
   challengeProgress,
@@ -10,7 +11,9 @@ import {
   featuredChallenge,
   FIFTY_TWO_WEEK_TOTAL_CENTS,
   generateSteps,
+  hasEditableSchedule,
   plannedTotalCents,
+  restoreBlock,
   sprintDefaultCents,
   SPRINT_DAYS,
   stepDueDate,
@@ -22,7 +25,9 @@ import { monthlyRateCents, remainingCents } from "../calc";
 import { catchUpCents } from "../allocate";
 import {
   CHALLENGE_INELIGIBILITY_TEXT,
+  CHALLENGE_RESTORE_BLOCK_TEXT,
   CHALLENGE_TICK_BLOCK_TEXT,
+  explainAdjustedSteps,
   explainChallengeDeletion,
   explainChallengeIfFinished,
   explainChallengeImpact,
@@ -640,5 +645,97 @@ describe("validating a new challenge", () => {
       assert.equal(total(steps), cents);
       assert.ok(steps.every((c) => c >= 1), "every step is worth at least a cent");
     }
+  });
+});
+
+/* ── What the edit form may offer ────────────────────────────────────────── */
+
+describe("which challenges can have their schedule edited", () => {
+  test("only the customisable types have numbers of their own", () => {
+    assert.equal(hasEditableSchedule(makeChallenge({ type: "custom-weekly" })), true);
+    assert.equal(hasEditableSchedule(makeChallenge({ type: "goal-sprint" })), true);
+    assert.equal(hasEditableSchedule(makeChallenge({ type: "52-week" })), false);
+    assert.equal(hasEditableSchedule(makeChallenge({ type: "reverse-52" })), false);
+  });
+
+  test("the schedule is editable until the first step records money", () => {
+    const c = makeChallenge({ type: "custom-weekly" });
+    assert.equal(canEditSchedule(c, []), true);
+    assert.equal(canEditSchedule(c, [tick(c, 0)]), false);
+  });
+
+  test("unticking every step opens the schedule back up", () => {
+    const c = makeChallenge({ type: "custom-weekly" });
+    const ticked = [tick(c, 0)];
+    assert.equal(canEditSchedule(c, ticked), false);
+    assert.equal(canEditSchedule(c, []), true);
+  });
+
+  test("another challenge's steps do not freeze this one", () => {
+    const c = makeChallenge({ id: "c1", type: "custom-weekly" });
+    const other = makeChallenge({ id: "c2" });
+    assert.equal(canEditSchedule(c, [tick(other, 0)]), true);
+  });
+});
+
+/* ── Restoring ───────────────────────────────────────────────────────────── */
+
+describe("whether an archived challenge can come back", () => {
+  const goal = makeGoal({ id: "g1", targetCents: 1000_00 });
+  const archived = makeChallenge({
+    id: "c1",
+    goalId: "g1",
+    archivedAt: "2026-09-01T00:00:00.000Z",
+  });
+
+  test("nothing else running means it can", () => {
+    assert.equal(restoreBlock(archived, [goal], [archived]), null);
+  });
+
+  test("another running challenge on the same goal blocks it", () => {
+    const running = makeChallenge({ id: "c2", goalId: "g1" });
+    assert.equal(restoreBlock(archived, [goal], [archived, running]), "goal-has-challenge");
+  });
+
+  test("another archived challenge does not block it", () => {
+    const alsoArchived = makeChallenge({
+      id: "c2",
+      goalId: "g1",
+      archivedAt: "2026-09-02T00:00:00.000Z",
+    });
+    assert.equal(restoreBlock(archived, [goal], [archived, alsoArchived]), null);
+  });
+
+  test("a challenge on a different goal does not block it", () => {
+    const elsewhere = makeChallenge({ id: "c2", goalId: "g2" });
+    assert.equal(restoreBlock(archived, [goal], [archived, elsewhere]), null);
+  });
+
+  test("a missing goal blocks it", () => {
+    assert.equal(restoreBlock(archived, [], [archived]), "goal-missing");
+  });
+
+  test("the reason reads as an explanation, not a refusal", () => {
+    assert.match(
+      CHALLENGE_RESTORE_BLOCK_TEXT["goal-has-challenge"],
+      /another challenge running/i,
+    );
+    assert.match(CHALLENGE_RESTORE_BLOCK_TEXT["goal-has-challenge"], /archive that one first/i);
+  });
+});
+
+/* ── A goal with nothing left to save towards ────────────────────────────── */
+
+describe("pausing when there is nothing left to save", () => {
+  test("a goal edited down to a zero target pauses rather than accepting $0", () => {
+    const goal = makeGoal({ targetCents: 0 });
+    assert.equal(tickBlock(makeChallenge({ goalId: goal.id }), goal, []), "goal-funded");
+  });
+
+  test("the asterisk footnote names both reasons an amount can differ", () => {
+    const text = explainAdjustedSteps("Japan Trip");
+    assert.match(text, /only needed part/i);
+    assert.match(text, /edited the row/i);
+    assert.match(text, /Japan Trip/);
   });
 });

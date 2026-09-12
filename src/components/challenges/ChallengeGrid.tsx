@@ -46,7 +46,7 @@ export function ChallengeGrid({
         const label = [
           `${capitalise(unit)} ${step + 1}`,
           adjusted
-            ? `${moneyExact(shownCents)}, edited from ${moneyExact(plannedCents)}`
+            ? `${moneyExact(shownCents)} recorded of a planned ${moneyExact(plannedCents)}`
             : moneyExact(plannedCents),
           `due ${fullDate(stepDueDate(challenge, step))}`,
         ].join(", ");

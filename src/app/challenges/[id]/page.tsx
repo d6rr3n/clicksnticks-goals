@@ -16,12 +16,15 @@ import { useGoals, useNow } from "@/lib/store/GoalsStore";
 import {
   challengeImpact,
   challengeProgress,
+  restoreBlock,
   stepDueDate,
   stepWord,
   tickBlock,
 } from "@/lib/challenges";
 import {
+  CHALLENGE_RESTORE_BLOCK_TEXT,
   CHALLENGE_TICK_BLOCK_TEXT,
+  explainAdjustedSteps,
   explainChallengeProgress,
 } from "@/lib/explain";
 import { money, moneyExact } from "@/lib/money";
@@ -64,6 +67,9 @@ export default function ChallengeDetailPage({
   const goal = data.goals.find((g) => g.id === challenge.goalId);
   const progress = challengeProgress(challenge, data.contributions);
   const block = tickBlock(challenge, goal, data.contributions);
+  const restoreIsBlocked = challenge.archivedAt
+    ? restoreBlock(challenge, data.goals, data.challenges)
+    : null;
   const unit = stepWord(challenge.cadence);
   const fraction =
     progress.plannedCents > 0
@@ -179,8 +185,7 @@ export default function ChallengeDetailPage({
           />
           {progress.adjustedSteps.length > 0 && (
             <p className="text-[11.5px] leading-relaxed text-muted">
-              * You edited this amount on {goal ? goal.name : "the goal"}&apos;s
-              history. The challenge counts what you actually saved.
+              {explainAdjustedSteps(goal ? goal.name : "the goal")}
             </p>
           )}
         </div>
@@ -196,22 +201,35 @@ export default function ChallengeDetailPage({
       )}
 
       <Panel title="Manage">
-        <div className="flex flex-wrap items-center gap-3">
-          {challenge.archivedAt ? (
-            <Button variant="secondary" onClick={() => restoreChallenge(challenge.id)}>
-              Restore challenge
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <ButtonLink variant="secondary" href={`/challenges/${challenge.id}/edit`}>
+              Edit
+            </ButtonLink>
+
+            {challenge.archivedAt ? (
+              <Button
+                variant="secondary"
+                disabled={restoreIsBlocked !== null}
+                onClick={() => restoreChallenge(challenge.id)}
+              >
+                Restore challenge
+              </Button>
+            ) : (
+              <Button variant="secondary" onClick={() => archiveChallenge(challenge.id)}>
+                Archive challenge
+              </Button>
+            )}
+
+            <Button variant="ghost" onClick={() => setConfirmDelete(true)}>
+              Delete
             </Button>
-          ) : (
-            <Button variant="secondary" onClick={() => archiveChallenge(challenge.id)}>
-              Archive challenge
-            </Button>
-          )}
-          <Button variant="ghost" onClick={() => setConfirmDelete(true)}>
-            Delete
-          </Button>
+          </div>
+
           <p className="text-[11.5px] leading-relaxed text-muted">
-            Archiving keeps every cent on {goal ? goal.name : "the goal"}.
-            Deleting takes it back off again.
+            {restoreIsBlocked !== null
+              ? CHALLENGE_RESTORE_BLOCK_TEXT[restoreIsBlocked]
+              : `Archiving keeps every cent on ${goal ? goal.name : "the goal"}. Deleting takes it back off again.`}
           </p>
         </div>
       </Panel>

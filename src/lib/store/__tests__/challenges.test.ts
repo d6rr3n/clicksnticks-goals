@@ -458,3 +458,149 @@ describe("challenges survive a reload", () => {
     assert.equal(data.goals.length, 1);
   });
 });
+
+/* ── Restoring cannot break one-per-goal ─────────────────────────────────── */
+
+describe("restoring an archived challenge", () => {
+  test("comes back when the goal has picked up nothing else", () => {
+    let data = archiveChallenge(withChallenge(), "c1", NOW);
+    data = restoreChallenge(data, "c1");
+    assert.equal(data.challenges[0].archivedAt, null);
+  });
+
+  test("is refused when the goal has started another one since", () => {
+    let data = archiveChallenge(withChallenge(), "c1", NOW);
+    data = addChallenge(
+      data,
+      { id: "c2", goalId: "g1", name: "Reverse", spec: { type: "reverse-52" }, startDate: TODAY },
+      NOW,
+    );
+    assert.equal(data.challenges.length, 2);
+
+    const after = restoreChallenge(data, "c1");
+    assert.equal(after, data, "nothing changes");
+    assert.ok(after.challenges.find((c) => c.id === "c1")?.archivedAt, "still archived");
+    assert.equal(after.challenges.find((c) => c.id === "c2")?.archivedAt, null);
+  });
+
+  test("the replacement is never archived or deleted to make room", () => {
+    let data = archiveChallenge(withChallenge(), "c1", NOW);
+    data = addChallenge(
+      data,
+      { id: "c2", goalId: "g1", name: "Reverse", spec: { type: "reverse-52" }, startDate: TODAY },
+      NOW,
+    );
+    const after = restoreChallenge(data, "c1");
+    assert.equal(after.challenges.length, 2);
+    assert.deepEqual(
+      after.challenges.map((c) => c.id),
+      ["c1", "c2"],
+    );
+  });
+
+  test("archiving the replacement frees the original to come back", () => {
+    let data = archiveChallenge(withChallenge(), "c1", NOW);
+    data = addChallenge(
+      data,
+      { id: "c2", goalId: "g1", name: "Reverse", spec: { type: "reverse-52" }, startDate: TODAY },
+      NOW,
+    );
+    data = archiveChallenge(data, "c2", NOW);
+    data = restoreChallenge(data, "c1");
+    assert.equal(data.challenges.find((c) => c.id === "c1")?.archivedAt, null);
+  });
+
+  test("a challenge whose goal is gone cannot be restored", () => {
+    let data = archiveChallenge(withChallenge(), "c1", NOW);
+    // deleteGoal removes its challenges, so build the orphan directly.
+    data = { ...data, goals: [] };
+    assert.equal(restoreChallenge(data, "c1"), data);
+  });
+
+  test("an unknown challenge is refused", () => {
+    const data = withChallenge();
+    assert.equal(restoreChallenge(data, "nope"), data);
+  });
+});
+
+/* ── A step never overshoots the goal ────────────────────────────────────── */
+
+describe("a step larger than the goal still needs", () => {
+  /** Japan Trip with only $5 left and a $52 step waiting. */
+  const nearlyThere = (): Dataset => {
+    const data = withChallenge({ targetCents: 100_00, openingBalanceCents: 95_00 });
+    return data;
+  };
+
+  test("records only what the goal needs", () => {
+    const data = completeStep(nearlyThere(), "c1", 51, NOW); // the $52 step
+    assert.equal(data.contributions.length, 1);
+    assert.equal(data.contributions[0].amountCents, 5_00, "capped at the $5 shortfall");
+    assert.equal(balanceCents(data.goals[0], data.contributions), 100_00);
+  });
+
+  test("keeps the step's own link, so it reverses like any other", () => {
+    let data = completeStep(nearlyThere(), "c1", 51, NOW);
+    assert.deepEqual(data.contributions[0].source, { challengeId: "c1", step: 51 });
+
+    data = uncompleteStep(data, "c1", 51, NOW);
+    assert.equal(data.contributions.length, 0);
+    assert.equal(balanceCents(data.goals[0], data.contributions), 95_00);
+  });
+
+  test("the goal lands exactly on target, never past it", () => {
+    const data = completeStep(nearlyThere(), "c1", 51, NOW);
+    assert.equal(balanceCents(data.goals[0], data.contributions), data.goals[0].targetCents);
+    assert.ok(isComplete(data.goals[0], data.contributions));
+    assert.ok(data.goals[0].completedAt);
+  });
+
+  test("further steps are then blocked", () => {
+    const data = completeStep(nearlyThere(), "c1", 51, NOW);
+    assert.equal(completeStep(data, "c1", 50, NOW), data);
+    assert.equal(challengeRows(data).length, 1);
+  });
+
+  test("the capped step reads as differing from the plan", () => {
+    const data = completeStep(nearlyThere(), "c1", 51, NOW);
+    const progress = challengeProgress(data.challenges[0], data.contributions);
+    assert.equal(progress.stepsDone, 1, "it still counts as ticked");
+    assert.deepEqual(progress.adjustedSteps, [51]);
+    assert.equal(progress.savedCents, 5_00);
+  });
+
+  test("a step that fits exactly is not capped or marked", () => {
+    const data = completeStep(
+      withChallenge({ targetCents: 100_00, openingBalanceCents: 48_00 }),
+      "c1",
+      51,
+      NOW,
+    ); // needs $52, step is $52
+    assert.equal(data.contributions[0].amountCents, 52_00);
+    assert.equal(balanceCents(data.goals[0], data.contributions), 100_00);
+    const progress = challengeProgress(data.challenges[0], data.contributions);
+    assert.deepEqual(progress.adjustedSteps, []);
+  });
+
+  test("a step well within the remaining need is untouched", () => {
+    const data = completeStep(withChallenge(), "c1", 51, NOW);
+    assert.equal(data.contributions[0].amountCents, 52_00);
+  });
+
+  test("a goal whose target was edited down to nothing pauses rather than records $0", () => {
+    const data = withChallenge({ targetCents: 0 });
+    assert.equal(completeStep(data, "c1", 0, NOW), data);
+  });
+
+  test("capping never invents money across a whole run", () => {
+    let data = withChallenge({ targetCents: 10_00, openingBalanceCents: 0 });
+    for (let step = 0; step < 52; step++) data = completeStep(data, "c1", step, NOW);
+    // $1 + $2 + $3 + $4 caps at $10; the rest are blocked.
+    assert.equal(balanceCents(data.goals[0], data.contributions), 10_00);
+    assert.equal(challengeRows(data).length, 4);
+    assert.deepEqual(
+      challengeRows(data).map((c) => c.amountCents),
+      [1_00, 2_00, 3_00, 4_00],
+    );
+  });
+});

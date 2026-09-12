@@ -2,10 +2,11 @@ import {
   cadenceOf,
   challengeIneligibility,
   generateSteps,
+  restoreBlock,
   stepNote,
   type ChallengeSpec,
 } from "../challenges";
-import { isArchived, isComplete } from "../calc";
+import { isArchived, remainingCents } from "../calc";
 import { toISODate } from "../dates";
 import { newId, reconcileCompletion } from "./mutations";
 import type { Challenge, Contribution, Dataset } from "../schema";
@@ -131,8 +132,18 @@ export const archiveChallenge = (
   now: Date = new Date(),
 ): Dataset => setArchived(data, id, now.toISOString());
 
-export const restoreChallenge = (data: Dataset, id: string): Dataset =>
-  setArchived(data, id, null);
+/**
+ * Restoring is refused when the goal has picked up another challenge in the
+ * meantime, because V1 runs one per goal. The newer challenge is never
+ * archived or deleted to make room — that would be this code quietly
+ * undoing a decision the customer made.
+ */
+export function restoreChallenge(data: Dataset, id: string): Dataset {
+  const challenge = data.challenges.find((c) => c.id === id);
+  if (!challenge) return data;
+  if (restoreBlock(challenge, data.goals, data.challenges) !== null) return data;
+  return setArchived(data, id, null);
+}
 
 /**
  * The destructive way out: the challenge and the contributions it recorded
@@ -183,13 +194,21 @@ export function completeStep(
 
   const goal = data.goals.find((g) => g.id === challenge.goalId);
   if (!goal || isArchived(goal)) return data;
-  // A funded goal has nowhere closer to go, so the challenge pauses here.
-  if (isComplete(goal, data.contributions)) return data;
 
+  // A funded goal has nowhere closer to go, so the challenge pauses here.
+  const remaining = remainingCents(goal, data.contributions);
+  if (remaining <= 0) return data;
+
+  /*
+   * A step never pushes the goal past its target. If the goal needs $5 and
+   * the next step asks for $10, $5 is what gets recorded: the goal lands
+   * exactly on target and the challenge pauses from there. The step still
+   * counts as ticked, and the grid marks it as differing from the plan.
+   */
   const contribution: Contribution = {
     id: newId(),
     goalId: goal.id,
-    amountCents: challenge.stepCents[step],
+    amountCents: Math.min(challenge.stepCents[step], remaining),
     date: toISODate(now),
     note: stepNote(challenge, step),
     source: { challengeId, step },

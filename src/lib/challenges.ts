@@ -242,9 +242,46 @@ export function tickBlock(
   if (challenge.archivedAt) return "challenge-archived";
   if (!goal) return "goal-missing";
   if (isArchived(goal)) return "goal-archived";
-  if (isComplete(goal, contributions)) return "goal-funded";
+  // Read as "nothing left to save towards", which also covers a goal whose
+  // target was later edited down to nothing.
+  if (remainingCents(goal, contributions) <= 0) return "goal-funded";
   return null;
 }
+
+/**
+ * Why an archived challenge cannot be brought back.
+ *
+ * V1 allows one running challenge per goal, and restoring is the one route
+ * that could quietly break that: archive a challenge, start a replacement,
+ * then restore the first. The newer challenge is never touched to make room —
+ * the customer archives it themselves if they want the old one back.
+ */
+export type RestoreBlock = "goal-has-challenge" | "goal-missing";
+
+export function restoreBlock(
+  challenge: Challenge,
+  goals: Goal[],
+  challenges: Challenge[],
+): RestoreBlock | null {
+  if (!goals.some((g) => g.id === challenge.goalId)) return "goal-missing";
+  const otherRunning = challenges.some(
+    (c) => c.id !== challenge.id && c.goalId === challenge.goalId && !c.archivedAt,
+  );
+  return otherRunning ? "goal-has-challenge" : null;
+}
+
+/**
+ * The schedule may only be changed while no money has been recorded against
+ * it. After that the amounts are what the customer was told they saved.
+ */
+export const canEditSchedule = (
+  challenge: Challenge,
+  contributions: Contribution[],
+): boolean => challengeContributions(challenge.id, contributions).length === 0;
+
+/** The fixed ladders have no numbers of their own to edit. */
+export const hasEditableSchedule = (challenge: Challenge): boolean =>
+  challenge.type === "custom-weekly" || challenge.type === "goal-sprint";
 
 /* ── Effect on the goal ──────────────────────────────────────────────────── */
 

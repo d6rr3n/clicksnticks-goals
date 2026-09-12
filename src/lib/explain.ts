@@ -6,6 +6,7 @@ import type {
   ChallengeImpact,
   ChallengeIneligibility,
   ChallengeProgress,
+  RestoreBlock,
   TickBlock,
 } from "./challenges";
 import type {
@@ -420,6 +421,20 @@ export const CHALLENGE_TICK_BLOCK_TEXT: Record<TickBlock, string> = {
     "This challenge is archived. Everything it saved is still on the goal.",
   "goal-missing": "The goal this challenge saved towards no longer exists.",
 };
+
+/** Why an archived challenge cannot be brought back right now. */
+export const CHALLENGE_RESTORE_BLOCK_TEXT: Record<RestoreBlock, string> = {
+  "goal-has-challenge":
+    "This goal has another challenge running. Archive that one first if you'd like this one back.",
+  "goal-missing": "The goal this challenge saved towards no longer exists.",
+};
+
+/**
+ * The asterisk in the grid. A step's recorded amount can differ from the plan
+ * for two reasons, and the customer is told both rather than left guessing.
+ */
+export const explainAdjustedSteps = (goalName: string): string =>
+  `* The amount recorded differs from the plan — either ${goalName} only needed part of that step, or you edited the row in its history. The challenge counts what actually went in.`;
 
 /** Why a goal can't take a new challenge. */
 export const CHALLENGE_INELIGIBILITY_TEXT: Record<ChallengeIneligibility, string> = {
