@@ -1,14 +1,36 @@
-import { contributions, getGoal } from "@/lib/data";
-import { dayMonth, signedMoney } from "@/lib/format";
+"use client";
+
+import Link from "next/link";
+import type { Contribution, Goal } from "@/lib/schema";
+import { byDateDesc } from "@/lib/calc";
+import { signedMoney } from "@/lib/money";
+import { dayMonth } from "@/lib/dates";
 import { MinusIcon, PlusIcon } from "../icons";
 
-export function ActivityList({ limit = 4 }: { limit?: number }) {
+export function ActivityList({
+  goals,
+  contributions,
+  limit = 4,
+}: {
+  goals: Goal[];
+  contributions: Contribution[];
+  limit?: number;
+}) {
+  const names = new Map(goals.map((g) => [g.id, g.name]));
+  const rows = byDateDesc(contributions).slice(0, limit);
+
+  if (rows.length === 0) {
+    return (
+      <p className="text-[12.5px] leading-relaxed text-muted">
+        Nothing logged yet. Add a contribution and it will show up here.
+      </p>
+    );
+  }
+
   return (
     <ul className="flex list-none flex-col p-0">
-      {contributions.slice(0, limit).map((c) => {
-        const deposit = c.amount > 0;
-        const name =
-          c.goalId === "general" ? "General Savings" : getGoal(c.goalId)?.name;
+      {rows.map((c) => {
+        const deposit = c.amountCents > 0;
         return (
           <li
             key={c.id}
@@ -30,12 +52,15 @@ export function ActivityList({ limit = 4 }: { limit?: number }) {
                 deposit ? "" : "text-terracotta-deep"
               }`}
             >
-              {signedMoney(c.amount)}
+              {signedMoney(c.amountCents)}
             </span>
-            <span className="flex-1 truncate text-[12.5px] text-muted">{name}</span>
-            <span className="tabular shrink-0 text-[11.5px] text-muted">
-              {dayMonth(c.date)}
-            </span>
+            <Link
+              href={`/goals/${c.goalId}`}
+              className="flex-1 truncate text-[12.5px] text-muted no-underline hover:text-forest hover:underline"
+            >
+              {names.get(c.goalId) ?? "Removed goal"}
+            </Link>
+            <span className="tabular shrink-0 text-[11.5px] text-muted">{dayMonth(c.date)}</span>
           </li>
         );
       })}

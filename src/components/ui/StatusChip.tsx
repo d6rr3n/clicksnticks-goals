@@ -1,5 +1,10 @@
-import type { GoalStatus } from "@/lib/types";
-import { STATUS_LABEL } from "@/lib/goals";
+import type { GoalStatus } from "@/lib/schema";
+
+const STATUS_LABEL: Record<GoalStatus, string> = {
+  "on-track": "On track",
+  behind: "Behind",
+  complete: "Complete",
+};
 import { AlertIcon, CheckIcon } from "../icons";
 
 /**

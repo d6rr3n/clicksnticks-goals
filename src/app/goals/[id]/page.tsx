@@ -1,41 +1,83 @@
-import type { Metadata } from "next";
+"use client";
+
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { use, useState } from "react";
+import { Skeleton } from "@/components/Skeleton";
+import { StoreNotices } from "@/components/StoreNotices";
+import { ContributionHistory } from "@/components/contributions/ContributionHistory";
+import { QuickAdd } from "@/components/contributions/QuickAdd";
+import { GoalImage } from "@/components/goals/GoalImage";
+import { Button, ButtonLink } from "@/components/ui/Button";
+import { Dialog } from "@/components/ui/Dialog";
 import { Panel } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { StatusChip } from "@/components/ui/StatusChip";
-import { ArrowRightIcon, MinusIcon, PlusIcon } from "@/components/icons";
-import { contributionsFor, getGoal, goals } from "@/lib/data";
-import { dayMonth, money, monthYear, percent, signedMoney } from "@/lib/format";
-import { expectedProgress, progressOf, remainingOf, statusOf } from "@/lib/goals";
+import { useGoals, useNow } from "@/lib/store/GoalsStore";
+import {
+  balanceCents,
+  monthlyRateCents,
+  monthsRemaining,
+  paceGap,
+  percentComplete,
+  projectedCompletion,
+  remainingCents,
+  statusOf,
+} from "@/lib/calc";
+import { money } from "@/lib/money";
+import { fullDate, monthYear } from "@/lib/dates";
+import { CATEGORY_LABEL, FREQUENCY_LABEL, PRIORITY_LABEL } from "@/lib/schema";
 
-type Params = { params: Promise<{ id: string }> };
+const FALLBACK_THUMB = "from-[#B9C4BB] via-[#7E8F82] to-[#4F6157]";
 
-export function generateStaticParams() {
-  return goals.map((g) => ({ id: g.id }));
-}
+export default function GoalDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const router = useRouter();
+  const { hydrated, data, archiveGoal, restoreGoal, deleteGoal } = useGoals();
+  const now = useNow();
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
-export async function generateMetadata({ params }: Params): Promise<Metadata> {
-  const goal = getGoal((await params).id);
-  return { title: goal?.name ?? "Goal not found" };
-}
+  if (!hydrated) return <Skeleton />;
 
-export default async function GoalDetailPage({ params }: Params) {
-  const goal = getGoal((await params).id);
-  if (!goal) notFound();
+  const goal = data.goals.find((g) => g.id === id);
+  if (!goal) {
+    return (
+      <Panel title="Goal not found">
+        <p className="mb-4 text-[13px] leading-relaxed text-muted">
+          This goal may have been deleted, or the link may be out of date.
+        </p>
+        <ButtonLink href="/goals">Back to all goals</ButtonLink>
+      </Panel>
+    );
+  }
 
-  const status = statusOf(goal);
-  const progress = progressOf(goal);
-  const expected = expectedProgress(goal);
-  const history = contributionsFor(goal.id);
-  const gap = progress - expected;
+  const contributions = data.contributions;
+  const status = statusOf(goal, contributions, now);
+  const balance = balanceCents(goal, contributions);
+  const progress = percentComplete(goal, contributions);
+  const gap = paceGap(goal, contributions, now);
+  const projected = projectedCompletion(goal, contributions, now);
+  const months = monthsRemaining(goal, contributions);
+  const category =
+    goal.category === "custom" && goal.customCategory
+      ? goal.customCategory
+      : CATEGORY_LABEL[goal.category];
 
   return (
     <>
+      <StoreNotices />
+
       <header
-        className={`relative overflow-hidden rounded-panel bg-gradient-to-br ${goal.thumb} px-6 pt-6 pb-7`}
+        className={`relative overflow-hidden rounded-panel bg-gradient-to-br ${goal.thumb ?? FALLBACK_THUMB} px-6 pt-6 pb-7`}
       >
-        <div aria-hidden className="absolute inset-0 bg-forest/35" />
+        {goal.imageId && (
+          <GoalImage
+            imageId={goal.imageId}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        )}
+        <div aria-hidden className="absolute inset-0 bg-forest/45" />
         <div className="relative">
           <Link
             href="/goals"
@@ -43,15 +85,35 @@ export default async function GoalDetailPage({ params }: Params) {
           >
             ← MY GOALS
           </Link>
+
           <div className="mt-2.5 flex flex-wrap items-center gap-3">
             <h1 className="font-display text-[clamp(28px,4vw,40px)] leading-none font-semibold text-cream">
+              {goal.emoji ? `${goal.emoji} ` : ""}
               {goal.name}
             </h1>
             <StatusChip status={status} />
+            {goal.archivedAt && (
+              <span className="rounded-full bg-cream/20 px-3 py-1 text-[10px] tracking-[0.1em] text-cream">
+                ARCHIVED
+              </span>
+            )}
           </div>
-          <p className="mt-2.5 max-w-[46ch] text-[13px] leading-relaxed text-cream/85">
-            {goal.blurb}
+
+          <p className="mt-2 flex flex-wrap gap-x-3 text-[11px] tracking-[0.1em] text-cream/75">
+            <span>{category.toUpperCase()}</span>
+            <span aria-hidden>·</span>
+            <span>{PRIORITY_LABEL[goal.priority].toUpperCase()} PRIORITY</span>
+            <span aria-hidden>·</span>
+            <span>
+              {money(goal.contributionCents)} {FREQUENCY_LABEL[goal.frequency].toUpperCase()}
+            </span>
           </p>
+
+          {goal.notes && (
+            <p className="mt-2.5 max-w-[46ch] text-[13px] leading-relaxed text-cream/85">
+              {goal.notes}
+            </p>
+          )}
         </div>
       </header>
 
@@ -59,18 +121,28 @@ export default async function GoalDetailPage({ params }: Params) {
         <Panel title="Progress">
           <div className="flex flex-col gap-4">
             <p className="tabular font-display text-[34px] leading-none font-semibold">
-              {money(goal.saved)}
-              <span className="text-lg font-normal text-muted"> / {money(goal.target)}</span>
+              {money(balance)}
+              <span className="text-lg font-normal text-muted"> / {money(goal.targetCents)}</span>
             </p>
 
             <ProgressBar fraction={progress} status={status} label={`${goal.name} progress`} />
 
             <dl className="m-0 grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
               {[
-                { t: "Still to go", v: money(remainingOf(goal)) },
+                { t: "Still to go", v: money(remainingCents(goal, contributions)) },
                 { t: "Target date", v: monthYear(goal.targetDate) },
-                { t: "Opened", v: monthYear(goal.startDate) },
-                { t: "Expected by now", v: percent(expected) },
+                {
+                  t: "Monthly rate",
+                  v: monthlyRateCents(goal) > 0 ? money(monthlyRateCents(goal)) : "—",
+                },
+                {
+                  t: "On this plan",
+                  v: status === "complete"
+                    ? "Complete"
+                    : projected
+                      ? fullDate(projected.toISOString().slice(0, 10))
+                      : "No end date",
+                },
               ].map((d) => (
                 <div key={d.t}>
                   <dt className="text-[9.5px] font-medium tracking-[0.14em] text-muted">
@@ -81,7 +153,6 @@ export default async function GoalDetailPage({ params }: Params) {
               ))}
             </dl>
 
-            {/* Says *why* the status is what it is, rather than just asserting it. */}
             <p
               className={`rounded-card px-4 py-3 text-[12.5px] leading-relaxed ${
                 status === "behind"
@@ -90,71 +161,93 @@ export default async function GoalDetailPage({ params }: Params) {
               }`}
             >
               {status === "complete" ? (
-                <>Fully funded — nothing more needed here.</>
+                <>Fully funded — nothing more needed here. The history below stays put.</>
+              ) : months === null ? (
+                <>
+                  No regular contribution is set, so there is no completion date yet.
+                  Add one and this fills in.
+                </>
               ) : status === "behind" ? (
                 <>
-                  Tracking <b>{percent(Math.abs(gap))}</b> behind the pace this
-                  timeline needs. Lifting contributions now costs less than
+                  At {money(monthlyRateCents(goal))} a month this takes{" "}
+                  <b>{months} more month{months === 1 ? "" : "s"}</b>, which lands after{" "}
+                  {monthYear(goal.targetDate)}. Lifting contributions now costs less than
                   catching up later.
                 </>
               ) : (
                 <>
-                  Running <b>{percent(Math.abs(gap))}</b> ahead of the pace this
-                  timeline needs. Keep going.
+                  At {money(monthlyRateCents(goal))} a month this lands in{" "}
+                  <b>{months} month{months === 1 ? "" : "s"}</b>, inside the{" "}
+                  {monthYear(goal.targetDate)} target
+                  {gap > 0.02 && <> — about {Math.round(gap * 100)}% ahead of pace</>}. Keep going.
                 </>
               )}
             </p>
+
+            <div className="flex flex-wrap gap-2">
+              <ButtonLink href={`/goals/${goal.id}/edit`} variant="secondary">
+                Edit goal
+              </ButtonLink>
+              {goal.archivedAt ? (
+                <Button variant="secondary" onClick={() => restoreGoal(goal.id)}>
+                  Restore from archive
+                </Button>
+              ) : (
+                <Button variant="secondary" onClick={() => archiveGoal(goal.id)}>
+                  Archive
+                </Button>
+              )}
+              <Button variant="ghost" onClick={() => setConfirmDelete(true)}>
+                Delete
+              </Button>
+            </div>
           </div>
         </Panel>
 
-        <Panel title="Contributions" subtitle={`${history.length} recorded`}>
-          {history.length === 0 ? (
-            <p className="text-[12.5px] text-muted">
-              No contributions logged yet. The first one is the hard one.
-            </p>
-          ) : (
-            <ul className="flex list-none flex-col p-0">
-              {history.map((c) => {
-                const deposit = c.amount > 0;
-                return (
-                  <li
-                    key={c.id}
-                    className="flex items-center gap-3 border-b border-line py-2.5 last:border-0 last:pb-0"
-                  >
-                    <span
-                      className={`grid h-[29px] w-[29px] shrink-0 place-items-center rounded-full ${
-                        deposit ? "bg-sage-light" : "bg-blush"
-                      }`}
-                    >
-                      {deposit ? (
-                        <PlusIcon className="h-3.5 w-3.5 text-forest" />
-                      ) : (
-                        <MinusIcon className="h-3.5 w-3.5 text-terracotta-deep" />
-                      )}
-                    </span>
-                    <span
-                      className={`tabular flex-1 text-[13.5px] font-medium ${deposit ? "" : "text-terracotta-deep"}`}
-                    >
-                      {signedMoney(c.amount)}
-                    </span>
-                    <span className="tabular text-[11.5px] text-muted">
-                      {dayMonth(c.date)}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-
-          <Link
-            href="/goals"
-            className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-forest px-5 py-3 text-[13px] text-cream no-underline transition-colors hover:bg-forest"
-          >
-            Back to all goals
-            <ArrowRightIcon className="h-3.5 w-3.5" />
-          </Link>
+        <Panel title="Add a contribution">
+          <QuickAdd goals={[goal]} defaultGoalId={goal.id} lockGoal />
         </Panel>
       </section>
+
+      <Panel
+        title="Contribution history"
+        subtitle="Every change here updates the figures above."
+      >
+        <ContributionHistory goal={goal} />
+      </Panel>
+
+      <Dialog
+        open={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        title={`Delete ${goal.name}?`}
+        description="This removes the goal and its entire contribution history. It cannot be undone. Archiving keeps everything and simply sets it aside."
+      >
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="danger"
+            onClick={() => {
+              deleteGoal(goal.id);
+              router.push("/goals");
+            }}
+          >
+            Delete permanently
+          </Button>
+          {!goal.archivedAt && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                archiveGoal(goal.id);
+                setConfirmDelete(false);
+              }}
+            >
+              Archive instead
+            </Button>
+          )}
+          <Button variant="ghost" onClick={() => setConfirmDelete(false)}>
+            Cancel
+          </Button>
+        </div>
+      </Dialog>
     </>
   );
 }

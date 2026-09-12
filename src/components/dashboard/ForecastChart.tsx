@@ -1,22 +1,49 @@
-import { forecast } from "@/lib/data";
-import { money } from "@/lib/format";
+"use client";
+
+import type { ForecastPoint } from "@/lib/calc";
+import { money } from "@/lib/money";
 
 /** One scale places every mark, tick and label. */
 const W = 560;
 const PLOT = { left: 54, right: 540, top: 16, bottom: 176 };
-const MAX = 100_000;
-const TICKS = [0, 25_000, 50_000, 75_000, 100_000];
 
-const x = (i: number) =>
-  PLOT.left + (i * (PLOT.right - PLOT.left)) / (forecast.length - 1);
-const y = (v: number) =>
-  PLOT.bottom - (v / MAX) * (PLOT.bottom - PLOT.top);
+/** Round the axis up to something a person would choose. */
+function niceMax(value: number): number {
+  if (value <= 0) return 100_00;
+  const magnitude = 10 ** Math.floor(Math.log10(value));
+  for (const step of [1, 2, 2.5, 5, 10]) {
+    const candidate = step * magnitude;
+    if (candidate >= value) return candidate;
+  }
+  return 10 * magnitude;
+}
 
-export function ForecastChart() {
-  const pts = forecast.map((p, i) => `${x(i)} ${y(p.value)}`);
+const shortMoney = (cents: number): string => {
+  const dollars = cents / 100;
+  if (dollars >= 1000) return `$${Math.round(dollars / 1000)}K`;
+  return `$${Math.round(dollars)}`;
+};
+
+export function ForecastChart({ series }: { series: ForecastPoint[] }) {
+  if (series.length < 2) {
+    return (
+      <p className="text-[12.5px] leading-relaxed text-muted">
+        Add a goal with a regular contribution and the forecast will appear here.
+      </p>
+    );
+  }
+
+  const max = niceMax(Math.max(...series.map((p) => p.valueCents)));
+  const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => Math.round(max * f));
+
+  const x = (i: number) =>
+    PLOT.left + (i * (PLOT.right - PLOT.left)) / (series.length - 1);
+  const y = (v: number) => PLOT.bottom - (v / max) * (PLOT.bottom - PLOT.top);
+
+  const pts = series.map((p, i) => `${x(i)} ${y(p.valueCents)}`);
   const line = `M${pts.join(" L")}`;
   const area = `${line} L${PLOT.right} ${PLOT.bottom} L${PLOT.left} ${PLOT.bottom} Z`;
-  const last = forecast[forecast.length - 1];
+  const last = series[series.length - 1];
 
   return (
     <div className="w-full overflow-x-auto">
@@ -24,25 +51,25 @@ export function ForecastChart() {
         viewBox={`0 0 ${W} 224`}
         className="block h-auto w-full min-w-[300px]"
         role="img"
-        aria-label={`Savings forecast rising from ${money(forecast[0].value)} in ${forecast[0].year} to ${money(last.value)} in ${last.year}`}
+        aria-label={`Savings forecast rising from ${money(series[0].valueCents)} in ${series[0].year} to ${money(last.valueCents)} in ${last.year}`}
       >
         <defs>
           <linearGradient id="forecast-area" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="var(--color-sage)" stopOpacity="0.52" />
-            <stop offset="1" stopColor="var(--color-sage)" stopOpacity="0.04" />
+            <stop offset="0" stopColor="var(--color-sage-deep)" stopOpacity="0.42" />
+            <stop offset="1" stopColor="var(--color-sage-deep)" stopOpacity="0.04" />
           </linearGradient>
         </defs>
 
         <g stroke="var(--color-line)" strokeWidth="1">
-          {TICKS.map((t) => (
+          {ticks.map((t) => (
             <line key={t} x1={PLOT.left} y1={y(t)} x2={PLOT.right} y2={y(t)} />
           ))}
         </g>
 
         <g fill="var(--color-muted)" fontSize="10" textAnchor="end" className="font-sans">
-          {TICKS.map((t) => (
+          {ticks.map((t) => (
             <text key={t} x={PLOT.left - 8} y={y(t) + 4}>
-              {t === 0 ? "$0" : `$${t / 1000}K`}
+              {shortMoney(t)}
             </text>
           ))}
         </g>
@@ -57,28 +84,21 @@ export function ForecastChart() {
           strokeLinejoin="round"
         />
 
-        {forecast.map((p, i) =>
-          i === forecast.length - 1 ? null : (
-            <circle
-              key={p.year}
-              cx={x(i)}
-              cy={y(p.value)}
-              r="3.4"
-              fill="var(--color-surface)"
-              stroke="var(--color-sage-deep)"
-              strokeWidth="2"
-            />
-          ),
-        )}
-        <circle
-          cx={x(forecast.length - 1)}
-          cy={y(last.value)}
-          r="5"
-          fill="var(--color-forest)"
-        />
+        {series.slice(0, -1).map((p, i) => (
+          <circle
+            key={p.year}
+            cx={x(i)}
+            cy={y(p.valueCents)}
+            r="3.4"
+            fill="var(--color-surface)"
+            stroke="var(--color-sage-deep)"
+            strokeWidth="2"
+          />
+        ))}
+        <circle cx={x(series.length - 1)} cy={y(last.valueCents)} r="5" fill="var(--color-forest)" />
 
         <g fill="var(--color-muted)" fontSize="10" textAnchor="middle" className="font-sans">
-          {forecast.map((p, i) => (
+          {series.map((p, i) => (
             <text key={p.year} x={x(i)} y={PLOT.bottom + 20}>
               {p.year}
             </text>
@@ -87,20 +107,13 @@ export function ForecastChart() {
 
         <g transform={`translate(${PLOT.right - 88},0)`}>
           <rect width="88" height="23" rx="11.5" fill="var(--color-forest)" />
-          <text
-            x="44"
-            y="15.5"
-            fill="var(--color-cream)"
-            fontSize="12"
-            textAnchor="middle"
-            className="font-sans"
-          >
-            {money(last.value)}
+          <text x="44" y="15.5" fill="var(--color-cream)" fontSize="12" textAnchor="middle" className="font-sans">
+            {money(last.valueCents)}
           </text>
         </g>
 
         <text x={PLOT.left} y="216" fill="var(--color-muted)" fontSize="9.5" className="font-sans">
-          Projected at current contribution rate
+          Projected at current contribution rates
         </text>
       </svg>
     </div>

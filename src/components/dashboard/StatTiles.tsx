@@ -1,14 +1,11 @@
-import { goals, projectedValue, savedThisMonth, totalSaved } from "@/lib/data";
-import { statusOf } from "@/lib/goals";
-import { money, percent } from "@/lib/format";
+"use client";
+
+import type { DashboardTotals } from "@/lib/calc";
+import { money } from "@/lib/money";
 import { CalendarIcon, ChartIcon, PiggyIcon, TargetIcon } from "../icons";
 
 function Tile({
-  icon,
-  label,
-  value,
-  foot,
-  className,
+  icon, label, value, foot, className,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -26,9 +23,16 @@ function Tile({
   );
 }
 
-export function StatTiles() {
-  const completed = goals.filter((g) => statusOf(g) === "complete").length;
-  const onTrack = goals.filter((g) => statusOf(g) !== "behind").length;
+export function StatTiles({ totals }: { totals: DashboardTotals }) {
+  const {
+    totalSavedCents, savedThisMonthCents, activeCount, completedCount,
+    onTrackCount, onTrackFraction, projectedValueCents,
+  } = totals;
+
+  const monthLabel =
+    savedThisMonthCents === 0
+      ? "Nothing added yet this month"
+      : `${savedThisMonthCents > 0 ? "↑ +" : "↓ −"}${money(Math.abs(savedThisMonthCents)).replace("$", "$")} this month`;
 
   return (
     <section aria-label="Summary" className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -36,29 +40,29 @@ export function StatTiles() {
         className="bg-sage-light text-forest"
         icon={<PiggyIcon className="h-5 w-5" />}
         label="TOTAL SAVED"
-        value={money(totalSaved)}
-        foot={`↑ ${money(savedThisMonth)} this month`}
+        value={money(totalSavedCents)}
+        foot={monthLabel}
       />
       <Tile
         className="bg-blush text-[#6B4B3C]"
         icon={<TargetIcon className="h-5 w-5" />}
         label="ACTIVE GOALS"
-        value={String(goals.length)}
-        foot={`${completed} completed`}
+        value={String(activeCount)}
+        foot={completedCount === 1 ? "1 completed" : `${completedCount} completed`}
       />
       <Tile
         className="bg-sage text-forest"
         icon={<CalendarIcon className="h-5 w-5" />}
         label="ON TRACK"
-        value={`${onTrack} / ${goals.length}`}
-        foot={percent(onTrack / goals.length)}
+        value={`${onTrackCount} / ${activeCount}`}
+        foot={`${Math.round(onTrackFraction * 100)}%`}
       />
       <Tile
         className="bg-terracotta text-cream"
         icon={<ChartIcon className="h-5 w-5" />}
         label="PROJECTED VALUE"
-        value={money(projectedValue)}
-        foot="by 2030"
+        value={money(projectedValueCents)}
+        foot={`by ${new Date().getFullYear() + 4}`}
       />
     </section>
   );

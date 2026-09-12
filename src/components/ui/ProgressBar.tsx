@@ -1,5 +1,4 @@
-import type { GoalStatus } from "@/lib/types";
-import { percent } from "@/lib/format";
+import type { GoalStatus } from "@/lib/schema";
 
 /**
  * Mid sage is deliberately absent here: at 2.25:1 against the track it does
@@ -40,7 +39,7 @@ export function ProgressBar({
       </div>
       {showValue && (
         <span className="tabular min-w-[34px] text-right text-[12.5px] font-medium">
-          {percent(fraction)}
+          {Math.round(fraction * 100)}%
         </span>
       )}
     </div>

@@ -1,45 +1,136 @@
-import type { Metadata } from "next";
-import { GoalCard } from "@/components/GoalCard";
-import { Panel } from "@/components/ui/Panel";
-import { goals, totalSaved } from "@/lib/data";
-import { remainingOf, statusOf } from "@/lib/goals";
-import { money } from "@/lib/format";
+"use client";
 
-export const metadata: Metadata = { title: "My Goals" };
+import { useState } from "react";
+import { FirstRunChoice } from "@/components/FirstRunChoice";
+import { GoalCard } from "@/components/GoalCard";
+import { Skeleton } from "@/components/Skeleton";
+import { StoreNotices } from "@/components/StoreNotices";
+import { ButtonLink } from "@/components/ui/Button";
+import { Panel } from "@/components/ui/Panel";
+import { PlusIcon } from "@/components/icons";
+import { useGoals, useNow } from "@/lib/store/GoalsStore";
+import { dashboardTotals, statusOf } from "@/lib/calc";
+import { money } from "@/lib/money";
 
 export default function GoalsPage() {
-  const behind = goals.filter((g) => statusOf(g) === "behind");
-  const stillToSave = goals.reduce((sum, g) => sum + remainingOf(g), 0);
+  const { mode, hydrated, data, restoreGoal } = useGoals();
+  const now = useNow();
+  const [showArchived, setShowArchived] = useState(false);
+
+  if (!hydrated) return <Skeleton />;
+  if (mode === "unset") return <FirstRunChoice />;
+
+  const live = data.goals.filter((g) => !g.archivedAt);
+  const archived = data.goals.filter((g) => g.archivedAt);
+  const totals = dashboardTotals(data.goals, data.contributions, now);
+  const behind = live.filter((g) => statusOf(g, data.contributions, now) === "behind");
 
   return (
     <>
-      <header className="rounded-panel bg-gradient-to-br from-[#FBF6F1] via-[#F6E7E1] to-[#EFD3CB] px-6 pt-6 pb-7">
+      <StoreNotices />
+
+      <header className="rounded-panel bg-gradient-to-br from-[#F6F2EC] via-[#E9EEE8] to-[#D6E0D8] px-6 pt-6 pb-7">
         <p className="text-[10px] font-medium tracking-[0.2em] text-sage-deep">
           EVERY GOAL, ALL IN ONE PLACE
         </p>
-        <h1 className="my-2 font-display text-[clamp(28px,4vw,40px)] leading-none font-semibold tracking-tight">
-          My Goals
-        </h1>
-        <p className="tabular text-[13px] text-muted">
-          {money(totalSaved)} saved · {money(stillToSave)} still to go
-          {behind.length > 0 && (
-            <>
-              {" · "}
-              <span className="font-medium text-terracotta-deep">
-                {behind.length} needing attention
-              </span>
-            </>
-          )}
-        </p>
+        <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="font-display text-[clamp(28px,4vw,40px)] leading-none font-semibold tracking-tight">
+              My Goals
+            </h1>
+            <p className="tabular mt-2 text-[13px] text-muted">
+              {live.length === 0 ? (
+                "No goals yet."
+              ) : (
+                <>
+                  {money(totals.totalSavedCents)} saved ·{" "}
+                  {money(totals.totalRemainingCents)} still to go
+                  {behind.length > 0 && (
+                    <>
+                      {" · "}
+                      <span className="font-medium text-terracotta-deep">
+                        {behind.length} needing attention
+                      </span>
+                    </>
+                  )}
+                </>
+              )}
+            </p>
+          </div>
+          <ButtonLink href="/goals/new">
+            <PlusIcon className="h-3.5 w-3.5" />
+            New goal
+          </ButtonLink>
+        </div>
       </header>
 
       <Panel>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {goals.map((goal) => (
-            <GoalCard key={goal.id} goal={goal} />
-          ))}
-        </div>
+        {live.length === 0 ? (
+          <div className="flex flex-col items-start gap-4 py-6">
+            <p className="max-w-[46ch] text-[13.5px] leading-relaxed text-muted">
+              Nothing here yet. Your first goal is the one that makes the rest feel
+              possible.
+            </p>
+            <ButtonLink href="/goals/new">
+              <PlusIcon className="h-3.5 w-3.5" />
+              Create a goal
+            </ButtonLink>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {live.map((goal) => (
+              <GoalCard
+                key={goal.id}
+                goal={goal}
+                contributions={data.contributions}
+                now={now}
+              />
+            ))}
+          </div>
+        )}
       </Panel>
+
+      {archived.length > 0 && (
+        <Panel
+          title="Archived"
+          subtitle={`${archived.length} goal${archived.length === 1 ? "" : "s"} set aside. Not counted in any total.`}
+        >
+          <button
+            type="button"
+            onClick={() => setShowArchived((v) => !v)}
+            className="text-[12.5px] text-sage-deep hover:underline"
+            aria-expanded={showArchived}
+          >
+            {showArchived ? "Hide archived" : "Show archived"}
+          </button>
+
+          {showArchived && (
+            <ul className="mt-3 flex list-none flex-col p-0">
+              {archived.map((goal) => (
+                <li
+                  key={goal.id}
+                  className="flex flex-wrap items-center gap-3 border-b border-line py-3 last:border-0"
+                >
+                  <span className="flex-1 text-[13.5px]">
+                    {goal.emoji ? `${goal.emoji} ` : ""}
+                    {goal.name}
+                  </span>
+                  <span className="tabular text-[12.5px] text-muted">
+                    {money(goal.targetCents)} target
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => restoreGoal(goal.id)}
+                    className="text-[12.5px] text-sage-deep hover:underline"
+                  >
+                    Restore
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+      )}
     </>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Jost, Playfair_Display } from "next/font/google";
 import { AppShell } from "@/components/AppShell";
+import { GoalsProvider } from "@/lib/store/GoalsStore";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -23,15 +24,13 @@ export const metadata: Metadata = {
   description: "Plan, save, achieve. A brighter future is a planned one.",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-AU" className={`${playfair.variable} ${jost.variable}`}>
       <body className="font-sans antialiased">
-        <AppShell>{children}</AppShell>
+        <GoalsProvider>
+          <AppShell>{children}</AppShell>
+        </GoalsProvider>
       </body>
     </html>
   );

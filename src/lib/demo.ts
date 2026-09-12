@@ -156,7 +156,14 @@ export function buildDemoDataset(now: Date = new Date()): Dataset {
     });
   }
 
-  return { schemaVersion: SCHEMA_VERSION, goals, contributions, celebrated: [] };
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    goals,
+    contributions,
+    // The demo's finished goal opens already celebrated, so the first view
+    // matches the approved dashboard rather than a congratulations banner.
+    celebrated: goals.filter((g) => g.completedAt).map((g) => g.id),
+  };
 }
 
 export const DEMO_GOAL_IDS = [

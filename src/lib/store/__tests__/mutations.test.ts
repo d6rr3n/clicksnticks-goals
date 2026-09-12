@@ -181,3 +181,22 @@ describe("demo dataset", () => {
     assert.ok(d.contributions.every((c) => ids.has(c.goalId)));
   });
 });
+
+describe("demo first impression", () => {
+  test("the finished demo goal opens already celebrated", () => {
+    const d = buildDemoDataset(NOW);
+    assert.equal(pendingCelebrations(d).length, 0);
+    assert.ok(d.celebrated.includes("demo-emergency-fund"));
+  });
+
+  test("a demo goal completed by the user still celebrates", () => {
+    let d = buildDemoDataset(NOW);
+    const car = d.goals.find((g) => g.id === "demo-new-car")!;
+    d = addContribution(
+      d,
+      { goalId: car.id, amountCents: 17_000_00, date: "2026-09-01" },
+      NOW,
+    );
+    assert.deepEqual(pendingCelebrations(d).map((g) => g.id), ["demo-new-car"]);
+  });
+});
