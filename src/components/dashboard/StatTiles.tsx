@@ -33,28 +33,28 @@ export function StatTiles() {
   return (
     <section aria-label="Summary" className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
       <Tile
-        className="bg-rose-light text-rose-deeper"
+        className="bg-sage-light text-forest"
         icon={<PiggyIcon className="h-5 w-5" />}
         label="TOTAL SAVED"
         value={money(totalSaved)}
         foot={`↑ ${money(savedThisMonth)} this month`}
       />
       <Tile
-        className="bg-[#F0E3DA] text-[#6B4B3C]"
+        className="bg-blush text-[#6B4B3C]"
         icon={<TargetIcon className="h-5 w-5" />}
         label="ACTIVE GOALS"
         value={String(goals.length)}
         foot={`${completed} completed`}
       />
       <Tile
-        className="bg-rose-pale text-[#5E3936]"
+        className="bg-sage text-forest"
         icon={<CalendarIcon className="h-5 w-5" />}
         label="ON TRACK"
         value={`${onTrack} / ${goals.length}`}
         foot={percent(onTrack / goals.length)}
       />
       <Tile
-        className="bg-rose-deep text-[#FFF6F3]"
+        className="bg-terracotta text-cream"
         icon={<ChartIcon className="h-5 w-5" />}
         label="PROJECTED VALUE"
         value={money(projectedValue)}

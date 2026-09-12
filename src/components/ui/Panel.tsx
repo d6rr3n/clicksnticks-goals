@@ -30,7 +30,7 @@ export function Panel({
           {action && (
             <Link
               href={action.href}
-              className="inline-flex shrink-0 items-center gap-1.5 text-xs text-rose-deep no-underline hover:text-rose-deeper hover:underline"
+              className="inline-flex shrink-0 items-center gap-1.5 text-xs text-sage-deep no-underline hover:text-forest hover:underline"
             >
               {action.label} →
             </Link>

@@ -2,13 +2,13 @@ import type { GoalStatus } from "@/lib/types";
 import { percent } from "@/lib/format";
 
 /**
- * Brand rose is deliberately absent here: at 1.78:1 against the track it does
+ * Mid sage is deliberately absent here: at 2.25:1 against the track it does
  * not read as a fill. See reference/README.md.
  */
 const FILL: Record<GoalStatus, string> = {
-  "on-track": "bg-rose-deep",
-  behind: "bg-clay",
-  complete: "bg-rose-deeper",
+  "on-track": "bg-sage-deep",
+  behind: "bg-terracotta-deep",
+  complete: "bg-forest",
 };
 
 export function ProgressBar({

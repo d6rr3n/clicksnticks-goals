@@ -14,7 +14,7 @@ export const goals: Goal[] = [
     target: 50_000,
     startDate: "2024-01-15",
     targetDate: "2028-08-01",
-    thumb: "from-[#C9B4A6] via-[#8E7A6D] to-[#6E5E55]",
+    thumb: "from-[#B9C4BB] via-[#7E8F82] to-[#4F6157]",
   },
   {
     id: "japan-trip",
@@ -24,7 +24,7 @@ export const goals: Goal[] = [
     target: 7_000,
     startDate: "2025-04-01",
     targetDate: "2027-04-01",
-    thumb: "from-[#D8B6AE] via-[#A8767B] to-[#6E5566]",
+    thumb: "from-[#CBD6CE] via-[#8FA69A] to-[#3F5A52]",
   },
   {
     id: "new-car",
@@ -34,7 +34,7 @@ export const goals: Goal[] = [
     target: 25_000,
     startDate: "2025-09-01",
     targetDate: "2028-01-01",
-    thumb: "from-[#E0B48F] via-[#B57A50] to-[#7C4A32]",
+    thumb: "from-[#E0C3A6] via-[#B58A62] to-[#7C5A3E]",
   },
   {
     id: "emergency-fund",
@@ -44,7 +44,7 @@ export const goals: Goal[] = [
     target: 10_000,
     startDate: "2024-06-01",
     targetDate: "2026-06-01",
-    thumb: "from-[#DCC9BE] via-[#AE928A] to-[#7C635F]",
+    thumb: "from-[#D9DCD2] via-[#A2AC9E] to-[#5E6B60]",
   },
 ];
 

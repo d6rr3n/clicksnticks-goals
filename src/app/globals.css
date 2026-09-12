@@ -1,29 +1,28 @@
 @import "tailwindcss";
 
 /*
- * Palette is brand-led: every value below is sampled from the logo
- * (reference/03-CLICKSNTICKS-LOGO.png) or derived from it and checked for
- * contrast. See reference/README.md for the measured ratios and the rules.
+ * The GOALS colourway is the Sage/Botanical scheme from the approved
+ * dashboard. The Clicks'n'Ticks logo remains the master brand mark, adapted
+ * to this palette. See reference/README.md for measured contrast ratios.
  */
 @theme {
-  /* --- brand core, sampled from the logo --- */
-  --color-rose: #d49790;
-  --color-rose-pale: #dbb3ac;
-  --color-rose-light: #efcec8;
-  --color-brand-cream: #faf5ef;
-  --color-ink: #111111;
+  /* --- GOALS colourway, sampled from reference/01-GOALS-APPROVED-DASHBOARD.png --- */
+  --color-forest: #172e2c;
+  --color-forest-hi: #2a403b;
+  --color-sage: #a4b5af;
+  --color-sage-light: #bdc7bf;
+  --color-sage-deep: #4a6b5e;
+  --color-blush: #e3d3c7;
+  --color-terracotta: #9b674f;
+  --color-terracotta-deep: #8b4d31;
 
-  /* --- derived UI tokens, WCAG-checked against canvas --- */
-  --color-sidebar: #241c1b;
-  --color-sidebar-hi: #322624;
-  --color-rose-deep: #a85f58;
-  --color-rose-deeper: #7c4340;
-  --color-clay: #9a5c33;
-  --color-canvas: #f4eee9;
-  --color-surface: #fffcf9;
-  --color-track: #e8dad2;
-  --color-line: #e9dcd4;
-  --color-muted: #6e5b58;
+  /* --- surfaces --- */
+  --color-cream: #f7f2ec;
+  --color-canvas: #efe9e3;
+  --color-surface: #f8f4f0;
+  --color-track: #e3dbd3;
+  --color-line: #e2d9d1;
+  --color-muted: #6a625c;
 
   --font-display: var(--font-playfair), Georgia, "Times New Roman", serif;
   --font-sans: var(--font-jost), ui-sans-serif, system-ui, sans-serif;
@@ -35,7 +34,7 @@
 @layer base {
   body {
     background: var(--color-canvas);
-    color: var(--color-sidebar);
+    color: var(--color-forest);
     -webkit-font-smoothing: antialiased;
   }
   /* Figures line up in columns wherever they're compared. */
@@ -43,7 +42,7 @@
     font-variant-numeric: tabular-nums;
   }
   :focus-visible {
-    outline: 2px solid var(--color-rose-deep);
+    outline: 2px solid var(--color-sage-deep);
     outline-offset: 3px;
     border-radius: 4px;
   }

@@ -14,7 +14,7 @@ export default function GoalsPage() {
   return (
     <>
       <header className="rounded-panel bg-gradient-to-br from-[#FBF6F1] via-[#F6E7E1] to-[#EFD3CB] px-6 pt-6 pb-7">
-        <p className="text-[10px] font-medium tracking-[0.2em] text-rose-deep">
+        <p className="text-[10px] font-medium tracking-[0.2em] text-sage-deep">
           EVERY GOAL, ALL IN ONE PLACE
         </p>
         <h1 className="my-2 font-display text-[clamp(28px,4vw,40px)] leading-none font-semibold tracking-tight">
@@ -25,7 +25,7 @@ export default function GoalsPage() {
           {behind.length > 0 && (
             <>
               {" · "}
-              <span className="font-medium text-clay">
+              <span className="font-medium text-terracotta-deep">
                 {behind.length} needing attention
               </span>
             </>

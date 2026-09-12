@@ -35,21 +35,21 @@ export default async function GoalDetailPage({ params }: Params) {
       <header
         className={`relative overflow-hidden rounded-panel bg-gradient-to-br ${goal.thumb} px-6 pt-6 pb-7`}
       >
-        <div aria-hidden className="absolute inset-0 bg-sidebar/35" />
+        <div aria-hidden className="absolute inset-0 bg-forest/35" />
         <div className="relative">
           <Link
             href="/goals"
-            className="text-[11px] tracking-[0.14em] text-brand-cream/85 no-underline hover:text-brand-cream hover:underline"
+            className="text-[11px] tracking-[0.14em] text-cream/85 no-underline hover:text-cream hover:underline"
           >
             ← MY GOALS
           </Link>
           <div className="mt-2.5 flex flex-wrap items-center gap-3">
-            <h1 className="font-display text-[clamp(28px,4vw,40px)] leading-none font-semibold text-brand-cream">
+            <h1 className="font-display text-[clamp(28px,4vw,40px)] leading-none font-semibold text-cream">
               {goal.name}
             </h1>
             <StatusChip status={status} />
           </div>
-          <p className="mt-2.5 max-w-[46ch] text-[13px] leading-relaxed text-brand-cream/85">
+          <p className="mt-2.5 max-w-[46ch] text-[13px] leading-relaxed text-cream/85">
             {goal.blurb}
           </p>
         </div>
@@ -85,8 +85,8 @@ export default async function GoalDetailPage({ params }: Params) {
             <p
               className={`rounded-card px-4 py-3 text-[12.5px] leading-relaxed ${
                 status === "behind"
-                  ? "bg-[#F3E6DA] text-clay"
-                  : "bg-rose-light/60 text-rose-deeper"
+                  ? "bg-[#F1E4DA] text-terracotta-deep"
+                  : "bg-sage-light/60 text-forest"
               }`}
             >
               {status === "complete" ? (
@@ -123,17 +123,17 @@ export default async function GoalDetailPage({ params }: Params) {
                   >
                     <span
                       className={`grid h-[29px] w-[29px] shrink-0 place-items-center rounded-full ${
-                        deposit ? "bg-rose-light" : "bg-[#EFE0D4]"
+                        deposit ? "bg-sage-light" : "bg-blush"
                       }`}
                     >
                       {deposit ? (
-                        <PlusIcon className="h-3.5 w-3.5 text-rose-deeper" />
+                        <PlusIcon className="h-3.5 w-3.5 text-forest" />
                       ) : (
-                        <MinusIcon className="h-3.5 w-3.5 text-clay" />
+                        <MinusIcon className="h-3.5 w-3.5 text-terracotta-deep" />
                       )}
                     </span>
                     <span
-                      className={`tabular flex-1 text-[13.5px] font-medium ${deposit ? "" : "text-clay"}`}
+                      className={`tabular flex-1 text-[13.5px] font-medium ${deposit ? "" : "text-terracotta-deep"}`}
                     >
                       {signedMoney(c.amount)}
                     </span>
@@ -148,7 +148,7 @@ export default async function GoalDetailPage({ params }: Params) {
 
           <Link
             href="/goals"
-            className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-sidebar px-5 py-3 text-[13px] text-brand-cream no-underline transition-colors hover:bg-rose-deeper"
+            className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-forest px-5 py-3 text-[13px] text-cream no-underline transition-colors hover:bg-forest"
           >
             Back to all goals
             <ArrowRightIcon className="h-3.5 w-3.5" />

@@ -41,7 +41,7 @@ export default function DashboardPage() {
       <section className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_1fr_0.86fr]">
         <Panel
           title="Challenges"
-          icon={<TrophyIcon className="h-4 w-4 text-rose-deep" />}
+          icon={<TrophyIcon className="h-4 w-4 text-sage-deep" />}
           subtitle="Make saving fun."
           action={{ href: "/challenges", label: "View all" }}
         >
@@ -52,12 +52,12 @@ export default function DashboardPage() {
           <ActivityList />
         </Panel>
 
-        <Panel title="Motivation" icon={<HeartIcon className="h-4 w-4 text-rose-deep" />}>
+        <Panel title="Motivation" icon={<HeartIcon className="h-4 w-4 text-sage-deep" />}>
           <figure className="m-0 flex flex-col gap-3">
-            <blockquote className="m-0 text-center font-display text-[19px] leading-snug italic text-rose-deeper">
+            <blockquote className="m-0 text-center font-display text-[19px] leading-snug italic text-forest">
               &ldquo;{motivation.quote}&rdquo;
             </blockquote>
-            <span aria-hidden className="mx-auto h-[1.5px] w-11 bg-rose" />
+            <span aria-hidden className="mx-auto h-[1.5px] w-11 bg-sage" />
             <figcaption className="text-center text-[11.5px] text-muted">
               {motivation.attrib}
             </figcaption>
@@ -66,10 +66,10 @@ export default function DashboardPage() {
       </section>
 
       <p className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-card bg-surface px-5 py-3 text-[11px] text-muted shadow-[0_1px_2px_rgba(36,28,27,.05),0_8px_24px_-12px_rgba(36,28,27,.18)]">
-        <b className="text-[9.5px] font-medium tracking-[0.1em] text-sidebar">STATUS KEY</b>
-        <span><i className="mr-1.5 inline-block h-2.5 w-2.5 rounded-[3px] bg-rose-deep align-[-1px]" />On track</span>
-        <span><i className="mr-1.5 inline-block h-2.5 w-2.5 rounded-[3px] bg-clay align-[-1px]" />Behind — also marked with a warning icon</span>
-        <span><i className="mr-1.5 inline-block h-2.5 w-2.5 rounded-[3px] bg-rose-deeper align-[-1px]" />Complete — also marked with a tick</span>
+        <b className="text-[9.5px] font-medium tracking-[0.1em] text-forest">STATUS KEY</b>
+        <span><i className="mr-1.5 inline-block h-2.5 w-2.5 rounded-[3px] bg-sage-deep align-[-1px]" />On track</span>
+        <span><i className="mr-1.5 inline-block h-2.5 w-2.5 rounded-[3px] bg-terracotta-deep align-[-1px]" />Behind — also marked with a warning icon</span>
+        <span><i className="mr-1.5 inline-block h-2.5 w-2.5 rounded-[3px] bg-forest align-[-1px]" />Complete — also marked with a tick</span>
         <span className="ml-auto">Colour never carries status alone.</span>
       </p>
     </>

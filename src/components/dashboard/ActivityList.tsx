@@ -16,18 +16,18 @@ export function ActivityList({ limit = 4 }: { limit?: number }) {
           >
             <span
               className={`grid h-[29px] w-[29px] shrink-0 place-items-center rounded-full ${
-                deposit ? "bg-rose-light" : "bg-[#EFE0D4]"
+                deposit ? "bg-sage-light" : "bg-blush"
               }`}
             >
               {deposit ? (
-                <PlusIcon className="h-3.5 w-3.5 text-rose-deeper" />
+                <PlusIcon className="h-3.5 w-3.5 text-forest" />
               ) : (
-                <MinusIcon className="h-3.5 w-3.5 text-clay" />
+                <MinusIcon className="h-3.5 w-3.5 text-terracotta-deep" />
               )}
             </span>
             <span
               className={`tabular min-w-[52px] text-[13.5px] font-medium ${
-                deposit ? "" : "text-clay"
+                deposit ? "" : "text-terracotta-deep"
               }`}
             >
               {signedMoney(c.amount)}

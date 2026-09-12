@@ -7,9 +7,9 @@ import { ArrowRightIcon, TargetIcon } from "../icons";
 
 export function TodaysFocus({ goal }: { goal: Goal }) {
   return (
-    <div className="flex flex-col gap-3 rounded-panel bg-rose-light p-5">
-      <h2 className="flex items-center gap-2 font-display text-xl font-semibold text-rose-deeper">
-        <TargetIcon className="h-4 w-4 text-rose-deep" />
+    <div className="flex flex-col gap-3 rounded-panel bg-blush p-5">
+      <h2 className="flex items-center gap-2 font-display text-xl font-semibold text-forest">
+        <TargetIcon className="h-4 w-4 text-sage-deep" />
         Today&apos;s Focus
       </h2>
 
@@ -30,7 +30,7 @@ export function TodaysFocus({ goal }: { goal: Goal }) {
 
       <Link
         href={`/goals/${goal.id}`}
-        className="mt-auto inline-flex items-center justify-center gap-2 rounded-full bg-sidebar px-5 py-3 text-[13px] text-brand-cream no-underline transition-colors hover:bg-rose-deeper"
+        className="mt-auto inline-flex items-center justify-center gap-2 rounded-full bg-forest px-5 py-3 text-[13px] text-cream no-underline transition-colors hover:bg-forest"
       >
         View Goal
         <ArrowRightIcon className="h-3.5 w-3.5" />

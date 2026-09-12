@@ -28,8 +28,8 @@ export function ForecastChart() {
       >
         <defs>
           <linearGradient id="forecast-area" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="var(--color-rose)" stopOpacity="0.52" />
-            <stop offset="1" stopColor="var(--color-rose)" stopOpacity="0.04" />
+            <stop offset="0" stopColor="var(--color-sage)" stopOpacity="0.52" />
+            <stop offset="1" stopColor="var(--color-sage)" stopOpacity="0.04" />
           </linearGradient>
         </defs>
 
@@ -51,7 +51,7 @@ export function ForecastChart() {
         <path
           d={line}
           fill="none"
-          stroke="var(--color-rose-deep)"
+          stroke="var(--color-sage-deep)"
           strokeWidth="2.2"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -65,7 +65,7 @@ export function ForecastChart() {
               cy={y(p.value)}
               r="3.4"
               fill="var(--color-surface)"
-              stroke="var(--color-rose-deep)"
+              stroke="var(--color-sage-deep)"
               strokeWidth="2"
             />
           ),
@@ -74,7 +74,7 @@ export function ForecastChart() {
           cx={x(forecast.length - 1)}
           cy={y(last.value)}
           r="5"
-          fill="var(--color-rose-deeper)"
+          fill="var(--color-forest)"
         />
 
         <g fill="var(--color-muted)" fontSize="10" textAnchor="middle" className="font-sans">
@@ -86,11 +86,11 @@ export function ForecastChart() {
         </g>
 
         <g transform={`translate(${PLOT.right - 88},0)`}>
-          <rect width="88" height="23" rx="11.5" fill="var(--color-sidebar)" />
+          <rect width="88" height="23" rx="11.5" fill="var(--color-forest)" />
           <text
             x="44"
             y="15.5"
-            fill="var(--color-brand-cream)"
+            fill="var(--color-cream)"
             fontSize="12"
             textAnchor="middle"
             className="font-sans"

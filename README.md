@@ -31,10 +31,10 @@ reference/       approved design assets and the palette they define
 `reference/README.md` is the source of truth for colour. Two rules the code
 depends on:
 
-- **Brand rose is never a progress fill.** At 1.78:1 against the track it does
-  not read as a bar. Fills use `rose-deep`, `rose-deeper` or `clay`.
-- **Colour never carries status alone.** `rose-deep` and `clay` sit 1.12:1 apart
-  in luminance, so every status also carries a label and an icon.
+- **Mid sage is never a progress fill.** At 2.25:1 against the track it does not
+  read as a bar. Fills use `sage-deep`, `forest` or `terracotta-deep`.
+- **Colour never carries status alone.** `sage-deep` and `terracotta-deep` sit
+  1.11:1 apart in luminance, so every status also carries a label and an icon.
 
 Palette lives in `src/app/globals.css` as Tailwind v4 `@theme` tokens. No
 hardcoded hex values in components.
