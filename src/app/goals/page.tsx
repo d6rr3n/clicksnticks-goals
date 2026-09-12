@@ -8,7 +8,7 @@ import { StoreNotices } from "@/components/StoreNotices";
 import { ButtonLink } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 import { BotanicalSprig } from "@/components/Botanical";
-import { PlusIcon } from "@/components/icons";
+import { CoinsIcon, PlusIcon } from "@/components/icons";
 import { useGoals, useNow } from "@/lib/store/GoalsStore";
 import { dashboardTotals, statusOf } from "@/lib/calc";
 import { money } from "@/lib/money";
@@ -58,10 +58,18 @@ export default function GoalsPage() {
               )}
             </p>
           </div>
-          <ButtonLink href="/goals/new">
-            <PlusIcon className="h-3.5 w-3.5" />
-            New goal
-          </ButtonLink>
+          <div className="flex flex-wrap gap-2">
+            {live.length > 0 && (
+              <ButtonLink href="/allocate" variant="secondary">
+                <CoinsIcon className="h-3.5 w-3.5" />
+                Spread some money
+              </ButtonLink>
+            )}
+            <ButtonLink href="/goals/new">
+              <PlusIcon className="h-3.5 w-3.5" />
+              New goal
+            </ButtonLink>
+          </div>
         </div>
       </header>
 

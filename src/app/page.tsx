@@ -10,6 +10,7 @@ import { QuickAdd } from "@/components/contributions/QuickAdd";
 import { ActivityList } from "@/components/dashboard/ActivityList";
 import { ChallengeCard } from "@/components/dashboard/ChallengeCard";
 import { ForecastChart } from "@/components/dashboard/ForecastChart";
+import { SpareMoneyCard } from "@/components/dashboard/SpareMoneyCard";
 import { StatTiles } from "@/components/dashboard/StatTiles";
 import { TodaysFocus } from "@/components/dashboard/TodaysFocus";
 import { WhatIf } from "@/components/dashboard/WhatIf";
@@ -96,6 +97,12 @@ export default function DashboardPage() {
               </Panel>
             )}
           </section>
+
+          <SpareMoneyCard
+            goals={data.goals}
+            contributions={data.contributions}
+            now={now}
+          />
 
           <Panel title="Quick Add" subtitle="Log a contribution without leaving the page.">
             <QuickAdd goals={live} />

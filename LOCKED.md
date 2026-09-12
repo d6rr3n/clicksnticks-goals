@@ -61,5 +61,27 @@ codebase only appeared east of UTC.
 
 ## Not yet built
 
-Challenges, Calendar, Insights, Smart Allocation, additional Editions, cloud
-accounts, authentication, bank connections, notifications, AI features.
+Challenges, Calendar, Insights, additional Editions, cloud accounts,
+authentication, bank connections, notifications, AI features.
+
+## Smart Allocation (built, pending review)
+
+| System | Where it lives |
+| --- | --- |
+| Allocation engine | `src/lib/allocate.ts` |
+| Smart Allocation page | `src/app/allocate/`, `src/components/allocate/` |
+| Atomic batch write | `addContributions` in `src/lib/store/mutations.ts` |
+
+Additional invariants:
+
+12. **Target size is never an allocation factor.** Weight decides the share;
+    need caps it.
+13. **The catch-up pass takes at most 70%** of the money, so a plan always
+    spreads.
+14. **The weighting never reaches the customer.** Reasons state the fact, never
+    a score. A test asserts no explanation contains a weight, score, factor or
+    multiplier.
+15. **Applying is atomic.** The whole batch lands in one commit, or none of it
+    does.
+16. **Smart Allocation never invents money.** Every dollar is either allocated
+    or shown as unallocated.

@@ -103,6 +103,41 @@ Plain sentences built deterministically from the numbers. Nothing is generated
 or phrased by a model. Tests assert the sentences never leak internal
 vocabulary, and that surprising results are explained rather than softened.
 
+## Smart Allocation
+
+"I've got some extra money — where should I put it?" A deterministic planning
+tool built on the forecast engine. Not advice, not a model.
+
+The method is three ideas, chosen so any answer can be defended in a sentence:
+
+1. **Catch-up** — for a goal with a target date, the lump sum that would put it
+   back on schedule today: remaining balance less whatever its own rate covers
+   before the deadline. A concrete amount, not a score.
+2. **Weight** — three plain factors, multiplied: priority (high 3 / medium 2 /
+   low 1), deadline nearness (≤6mo 3 · ≤12mo 2.5 · ≤24mo 2 · ≤48mo 1.5 · beyond
+   or none 1), and schedule (behind 2 · on track 1 · comfortably ahead 0.5).
+   Held as whole numbers at ten times nominal value so no float can wobble.
+3. **Two passes** — help the behind goals first, capped at what each needs to
+   catch up; then spread what is left, capped at what each still needs.
+
+**A goal's target size is not a factor.** Money is shared by weight and capped
+by need, so a goal can never win a larger share for being expensive.
+
+**The catch-up pass takes at most 70%** of the money. Behind goals get stronger
+weighting, not absolute priority — otherwise one badly-behind goal absorbs
+everything and the plan stops being useful.
+
+Determinism is structural: integer cents, injected clock, and a fixed sort
+ending in the goal id. Cents are shared by largest remainder, so the parts
+always sum exactly to the whole.
+
+The weighting never reaches the customer. Reasons name the fact — behind
+schedule, deadline approaching, higher priority, comfortably ahead — never a
+number.
+
+Nothing writes until Apply is confirmed, and then `addContributions` records
+the whole batch in one commit: all of them or none.
+
 ## How the data works
 
 **The contribution ledger is the only record of money.** A goal stores an

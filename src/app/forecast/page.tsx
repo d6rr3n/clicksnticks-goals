@@ -12,7 +12,7 @@ import { PortfolioTiles } from "@/components/forecast/PortfolioTiles";
 import { ButtonLink } from "@/components/ui/Button";
 import { Field, inputClass } from "@/components/ui/Field";
 import { Panel } from "@/components/ui/Panel";
-import { PlusIcon, SparkIcon } from "@/components/icons";
+import { CoinsIcon, PlusIcon, SparkIcon } from "@/components/icons";
 import { useGoals, useNow } from "@/lib/store/GoalsStore";
 import { isComplete, portfolioForecast } from "@/lib/calc";
 import { portfolioSummary } from "@/lib/forecast";
@@ -164,6 +164,22 @@ export default function ForecastPage() {
           )}
         </div>
       </Panel>
+
+      <Link
+        href="/allocate"
+        className="flex flex-wrap items-center gap-3 rounded-card border border-secondary/30 bg-tint-soft/60 px-5 py-4 text-primary no-underline transition-colors hover:bg-tint-soft"
+      >
+        <CoinsIcon className="h-5 w-5 shrink-0 text-secondary" />
+        <span className="font-display text-[18px] font-semibold">
+          Got some spare money?
+        </span>
+        <span className="text-[13px] text-muted">
+          We&apos;ll suggest where it would do the most good.
+        </span>
+        <span aria-hidden className="ml-auto text-[13px]">
+          →
+        </span>
+      </Link>
 
       <Link
         href="/what-if"

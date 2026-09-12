@@ -7,17 +7,20 @@ import { Skeleton } from "@/components/Skeleton";
 import { StoreNotices } from "@/components/StoreNotices";
 import { BotanicalCorner, BotanicalSprig } from "@/components/Botanical";
 import { AllocationRow } from "@/components/allocate/AllocationRow";
+import { ApplyAllocationDialog } from "@/components/allocate/ApplyAllocationDialog";
 import { BeforeAfter } from "@/components/allocate/BeforeAfter";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 import { PlusIcon } from "@/components/icons";
 import { useGoals, useNow } from "@/lib/store/GoalsStore";
-import { planFromAmounts, smartAllocate } from "@/lib/allocate";
+import { ALLOCATION_NOTE, planFromAmounts, smartAllocate } from "@/lib/allocate";
 import { explainPlan, explainUnallocated, ALLOCATION_NOTE_TEXT } from "@/lib/explain";
 import { money, parseAmount } from "@/lib/money";
+import { toISODate } from "@/lib/dates";
+import { CheckIcon } from "@/components/icons";
 
 export default function AllocatePage() {
-  const { mode, hydrated, data } = useGoals();
+  const { mode, hydrated, data, addContributions } = useGoals();
   const now = useNow();
 
   const [input, setInput] = useState("");
@@ -25,6 +28,8 @@ export default function AllocatePage() {
   const [error, setError] = useState<string | null>(null);
   /** Null means "showing the recommendation". A map means it's been adjusted. */
   const [adjusted, setAdjusted] = useState<Record<string, number> | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [applied, setApplied] = useState<{ total: number; goals: number } | null>(null);
 
   const recommended = useMemo(
     () =>
@@ -60,6 +65,29 @@ export default function AllocatePage() {
     setError(null);
     setAvailable(parsed);
     setAdjusted(null);
+    setApplied(null);
+  }
+
+  /**
+   * The only write in this whole page, and it happens once, atomically: every
+   * contribution lands or none does.
+   */
+  function applyPlan() {
+    if (!plan) return;
+    const lines = plan.allocations.filter((a) => a.amountCents > 0);
+    addContributions(
+      lines.map((a) => ({
+        goalId: a.goalId,
+        amountCents: a.amountCents,
+        date: toISODate(now),
+        note: ALLOCATION_NOTE,
+      })),
+    );
+    setApplied({ total: plan.totalAllocatedCents, goals: lines.length });
+    setConfirming(false);
+    setAvailable(null);
+    setAdjusted(null);
+    setInput("");
   }
 
   /** Editing one row must never let the total exceed what's available. */
@@ -114,6 +142,26 @@ export default function AllocatePage() {
         </Panel>
       ) : (
         <>
+          {applied && (
+            <p
+              role="status"
+              className="flex flex-wrap items-center gap-3 rounded-card bg-tint-soft px-5 py-4 text-[13.5px] text-primary"
+            >
+              <CheckIcon className="h-5 w-5 shrink-0 text-success" />
+              <span>
+                <b className="font-semibold">{money(applied.total)}</b> added across{" "}
+                {applied.goals} goal{applied.goals === 1 ? "" : "s"}. It&apos;s in
+                your contribution history now.
+              </span>
+              <Link
+                href="/goals"
+                className="ml-auto inline-flex min-h-[24px] items-center text-[12.5px] text-secondary no-underline hover:underline"
+              >
+                See your goals →
+              </Link>
+            </p>
+          )}
+
           <Panel>
             <form onSubmit={showPlan} noValidate className="flex flex-col gap-4">
               <div className="flex flex-wrap items-end gap-4">
@@ -210,6 +258,28 @@ export default function AllocatePage() {
               <Panel title="What this changes">
                 <BeforeAfter plan={plan} />
               </Panel>
+
+              <div className="flex flex-wrap items-center gap-3 rounded-card bg-surface px-5 py-4 elevated">
+                <Button
+                  onClick={() => setConfirming(true)}
+                  disabled={plan.totalAllocatedCents <= 0}
+                >
+                  Apply allocation
+                </Button>
+                <p className="text-[12px] text-muted">
+                  {plan.totalAllocatedCents > 0
+                    ? "Records these as contributions dated today. Nothing moves between your accounts."
+                    : "There's nothing to apply yet."}
+                </p>
+              </div>
+
+              <ApplyAllocationDialog
+                open={confirming}
+                plan={plan}
+                now={now}
+                onClose={() => setConfirming(false)}
+                onConfirm={applyPlan}
+              />
             </>
           )}
         </>
