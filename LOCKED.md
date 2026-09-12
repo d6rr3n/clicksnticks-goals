@@ -1,0 +1,65 @@
+# Locked systems
+
+These are approved and signed off. **Do not redesign or rewrite them.** The only
+reason to change locked code is a genuine bug — and then the fix should be the
+smallest one that works, with a regression test.
+
+Checkpoint: `Forecast + What If approved` (tag `checkpoint/forecast-what-if`).
+
+## Locked at this checkpoint
+
+| System | Where it lives |
+| --- | --- |
+| Forecast calculation engine | `src/lib/calc.ts`, `src/lib/forecast.ts` |
+| Forecast page structure | `src/app/forecast/`, `src/components/forecast/` |
+| What If simulator structure | `src/components/whatif/WhatIfSimulator.tsx`, `src/app/what-if/` |
+| What If scenario behaviour | `simulateExtra`, `simulateLumpSum`, `requiredRate` |
+| Apply-to-goal confirmation flow | `src/components/whatif/ApplyScenarioDialog.tsx` |
+| Sage Edition visual system | `src/app/globals.css`, `reference/README.md` |
+| Navigation | `src/components/Sidebar.tsx` |
+| Goal CRUD and persistence | `src/lib/store/`, `src/lib/schema.ts` |
+| Date and currency architecture | `src/lib/dates.ts`, `src/lib/money.ts` |
+
+## Invariants these systems rely on
+
+Breaking any of these is a regression, not a refactor.
+
+1. **One forecast engine.** The portfolio is walked monthly in `calc.ts`; the
+   dashboard's yearly series is a sample of that walk, pinned by a golden test.
+   Do not add a second walker.
+2. **One definition of duration.** Everything goes through `monthsToClear`, so a
+   scenario cannot disagree with a projection.
+3. **The ledger is the only record of money.** Balance is opening balance plus
+   contributions. Nothing financial is stored twice.
+4. **Money is integer cents.** Never floats.
+5. **Dates are date-only strings parsed at local noon.** Never `toISOString()`
+   for a displayed date — it reports the UTC day and is wrong east of UTC.
+6. **Weekly and fortnightly convert at 52 and 26 payments a year**, not 4 and 2
+   a month. The monthly-average model is the V1 approach; no competing
+   discrete-payment engine.
+7. **Required rates round up.** Rounding down leaves the target short.
+8. **Scenarios never write.** Applying is separate, explicit and confirmed, and
+   edits the goal's plan only — it never moves money or creates a contribution.
+   Lump sums are not appliable at all.
+9. **Colour never carries status alone.** Success and warning sit 1.31:1 apart
+   in luminance; every status also carries a label and an icon.
+10. **No component holds a colour.** Only semantic tokens.
+11. **Real calculations take precedence** over the mockup's illustrative
+    figures. A surprising result gets explained, never adjusted.
+
+## Verification before any change to locked code
+
+```bash
+npm run build
+npx eslint src scripts --max-warnings=0
+TZ=UTC npm test
+TZ=Australia/Sydney npm test
+```
+
+All four must pass. The Sydney run is not optional: two real bugs in this
+codebase only appeared east of UTC.
+
+## Not yet built
+
+Challenges, Calendar, Insights, Smart Allocation, additional Editions, cloud
+accounts, authentication, bank connections, notifications, AI features.

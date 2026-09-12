@@ -2,6 +2,9 @@
 
 Savings goal tracker. Plan, save, achieve.
 
+> **[LOCKED.md](LOCKED.md)** lists the systems that are approved and signed off,
+> the invariants they rely on, and the checks to run before touching them.
+
 ## Stack
 
 Next.js 16 (App Router) · TypeScript · Tailwind v4 · local-first, no backend.
