@@ -35,7 +35,15 @@ export function QuickAdd({
   const [errors, setErrors] = useState<Errors<ContributionField>>({});
   const [confirmation, setConfirmation] = useState<string | null>(null);
 
-  if (open.length === 0) return null;
+  if (open.length === 0) {
+    return (
+      <p className="text-[12.5px] leading-relaxed text-muted">
+        {goals.some((g) => g.archivedAt)
+          ? "This goal is archived. Restore it to add contributions."
+          : "Create a goal first, then you can log contributions against it."}
+      </p>
+    );
+  }
 
   const target = open.find((g) => g.id === goalId) ?? open[0];
 

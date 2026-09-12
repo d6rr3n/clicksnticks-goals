@@ -64,7 +64,7 @@ export default function DashboardPage() {
         </Panel>
       ) : (
         <>
-          <StatTiles totals={totals} />
+          <StatTiles totals={totals} horizonYear={series[series.length - 1].year} />
 
           <Panel title="Your Goals" action={{ href: "/goals", label: "View all" }}>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">

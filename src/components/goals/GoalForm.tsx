@@ -294,29 +294,35 @@ export function GoalForm({ existing }: { existing?: Goal }) {
             )}
           </Field>
 
-          <div className="sm:col-span-2">
-            <Field label="Emoji" optional error={errors.emoji}>
-              {(p) => (
-                <div className="flex flex-wrap items-center gap-2" id={p.id}>
-                  {EMOJI.map((e) => (
-                    <button
-                      key={e}
-                      type="button"
-                      aria-pressed={form.emoji === e}
-                      onClick={() => set("emoji", form.emoji === e ? "" : e)}
-                      className={`grid h-10 w-10 place-items-center rounded-[10px] border text-lg transition-colors ${
-                        form.emoji === e
-                          ? "border-sage-deep bg-sage-light"
-                          : "border-line bg-surface hover:bg-canvas"
-                      }`}
-                    >
-                      {e}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </Field>
-          </div>
+          <fieldset className="m-0 border-0 p-0 sm:col-span-2">
+            <legend className="mb-1.5 flex items-baseline gap-2 text-[11px] font-medium tracking-[0.12em] text-muted">
+              EMOJI
+              <span className="font-normal tracking-normal lowercase opacity-70">optional</span>
+            </legend>
+            <div className="flex flex-wrap items-center gap-2">
+              {EMOJI.map((e) => (
+                <button
+                  key={e}
+                  type="button"
+                  aria-pressed={form.emoji === e}
+                  aria-label={`Use the ${e} emoji`}
+                  onClick={() => set("emoji", form.emoji === e ? "" : e)}
+                  className={`grid h-10 w-10 place-items-center rounded-[10px] border text-lg transition-colors ${
+                    form.emoji === e
+                      ? "border-sage-deep bg-sage-light"
+                      : "border-line bg-surface hover:bg-canvas"
+                  }`}
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
+            {errors.emoji && (
+              <p role="alert" className="mt-1.5 text-[11.5px] font-medium text-terracotta-deep">
+                {errors.emoji}
+              </p>
+            )}
+          </fieldset>
 
           <div className="sm:col-span-2">
             <Field label="Notes" optional error={errors.notes} hint="Why this one matters.">

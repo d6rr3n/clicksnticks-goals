@@ -16,8 +16,11 @@ export function ActivityList({
   contributions: Contribution[];
   limit?: number;
 }) {
-  const names = new Map(goals.map((g) => [g.id, g.name]));
-  const rows = byDateDesc(contributions).slice(0, limit);
+  // Archived goals are excluded from every total, so their ledger stays out of
+  // the feed too — otherwise activity and totals tell different stories.
+  const live = goals.filter((g) => !g.archivedAt);
+  const names = new Map(live.map((g) => [g.id, g.name]));
+  const rows = byDateDesc(contributions.filter((c) => names.has(c.goalId))).slice(0, limit);
 
   if (rows.length === 0) {
     return (

@@ -61,7 +61,12 @@ export function projectedCompletion(
   return addMonths(now, months);
 }
 
-/** On track when the planned rate lands on or before the target date. */
+/**
+ * On track when the planned rate lands on or before the target date.
+ * Compared as calendar dates: projectedCompletion carries the current time of
+ * day, so a timestamp comparison would call a goal landing on its target date
+ * "behind" for any completion later in the day than the parsed target.
+ */
 export function isOnTrack(
   goal: Goal,
   contributions: Contribution[],
@@ -70,7 +75,7 @@ export function isOnTrack(
   if (isComplete(goal, contributions)) return true;
   const projected = projectedCompletion(goal, contributions, now);
   if (!projected) return false;
-  return projected.getTime() <= parseDate(goal.targetDate).getTime();
+  return toISODate(projected) <= goal.targetDate;
 }
 
 export function statusOf(

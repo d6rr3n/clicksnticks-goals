@@ -23,7 +23,13 @@ function Tile({
   );
 }
 
-export function StatTiles({ totals }: { totals: DashboardTotals }) {
+export function StatTiles({
+  totals,
+  horizonYear,
+}: {
+  totals: DashboardTotals;
+  horizonYear: number;
+}) {
   const {
     totalSavedCents, savedThisMonthCents, activeCount, completedCount,
     onTrackCount, onTrackFraction, projectedValueCents,
@@ -62,7 +68,7 @@ export function StatTiles({ totals }: { totals: DashboardTotals }) {
         icon={<ChartIcon className="h-5 w-5" />}
         label="PROJECTED VALUE"
         value={money(projectedValueCents)}
-        foot={`by ${new Date().getFullYear() + 4}`}
+        foot={`by ${horizonYear}`}
       />
     </section>
   );

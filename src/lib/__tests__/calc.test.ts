@@ -370,3 +370,42 @@ describe("forecast", () => {
     assert.ok(series.every((p) => p.valueCents === 100_00));
   });
 });
+
+describe("regressions", () => {
+  test("landing exactly on the target date counts as on track", () => {
+    // projectedCompletion carries the current time of day; comparing timestamps
+    // rather than dates used to call this goal behind.
+    const afternoon = new Date(2026, 8, 12, 18, 0);
+    const g = makeGoal({
+      targetCents: 1000_00,
+      openingBalanceCents: 0,
+      contributionCents: 100_00,
+      frequency: "monthly",
+      targetDate: "2027-07-12",
+    });
+    assert.equal(isOnTrack(g, [], afternoon), true);
+    assert.equal(statusOf(g, [], afternoon), "on-track");
+  });
+
+  test("on track is judged by date regardless of the time of day", () => {
+    const g = makeGoal({
+      targetCents: 1000_00, openingBalanceCents: 0,
+      contributionCents: 100_00, frequency: "monthly", targetDate: "2027-07-12",
+    });
+    for (const hour of [0, 6, 9, 12, 18, 23]) {
+      assert.equal(
+        isOnTrack(g, [], new Date(2026, 8, 12, hour, 30)),
+        true,
+        `expected on track at ${hour}:30`,
+      );
+    }
+  });
+
+  test("one day past the target date is behind", () => {
+    const g = makeGoal({
+      targetCents: 1000_00, openingBalanceCents: 0,
+      contributionCents: 100_00, frequency: "monthly", targetDate: "2027-07-11",
+    });
+    assert.equal(isOnTrack(g, [], new Date(2026, 8, 12, 12, 0)), false);
+  });
+});

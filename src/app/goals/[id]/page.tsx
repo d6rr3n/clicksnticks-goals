@@ -25,7 +25,7 @@ import {
   statusOf,
 } from "@/lib/calc";
 import { money } from "@/lib/money";
-import { fullDate, monthYear } from "@/lib/dates";
+import { fullDate, monthYear, toISODate } from "@/lib/dates";
 import { CATEGORY_LABEL, FREQUENCY_LABEL, PRIORITY_LABEL } from "@/lib/schema";
 
 const FALLBACK_THUMB = "from-[#B9C4BB] via-[#7E8F82] to-[#4F6157]";
@@ -140,7 +140,7 @@ export default function GoalDetailPage({ params }: { params: Promise<{ id: strin
                   v: status === "complete"
                     ? "Complete"
                     : projected
-                      ? fullDate(projected.toISOString().slice(0, 10))
+                      ? fullDate(toISODate(projected))
                       : "No end date",
                 },
               ].map((d) => (

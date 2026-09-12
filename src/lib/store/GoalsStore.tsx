@@ -10,6 +10,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { buildDemoDataset } from "../demo";
+import { deleteImage } from "./images";
 import { emptyDataset, type Dataset, type DatasetMode, type Goal } from "../schema";
 import * as m from "./mutations";
 import {
@@ -169,7 +170,12 @@ function useGoalsInternal() {
         commit((d) => m.updateGoal(d, id, patch)),
       archiveGoal: (id: string) => commit((d) => m.archiveGoal(d, id)),
       restoreGoal: (id: string) => commit((d) => m.restoreGoal(d, id)),
-      deleteGoal: (id: string) => commit((d) => m.deleteGoal(d, id)),
+      deleteGoal: (id: string) => {
+        // Drop the image too, so deleting a goal doesn't orphan a blob.
+        const imageId = state.data.goals.find((g) => g.id === id)?.imageId;
+        if (imageId) void deleteImage(imageId).catch(() => {});
+        commit((d) => m.deleteGoal(d, id));
+      },
       addContribution: (input: {
         goalId: string;
         amountCents: number;
