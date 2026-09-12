@@ -182,6 +182,18 @@ function useGoalsInternal() {
         date: string;
         note?: string;
       }) => commit((d) => m.addContribution(d, input)),
+      /**
+       * All of them or none. The whole batch is one commit and one write, so a
+       * plan can never be half-applied.
+       */
+      addContributions: (
+        inputs: Array<{
+          goalId: string;
+          amountCents: number;
+          date: string;
+          note?: string;
+        }>,
+      ) => commit((d) => m.addContributions(d, inputs)),
       updateContribution: (
         id: string,
         patch: { amountCents?: number; date?: string; note?: string },

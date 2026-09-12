@@ -1,6 +1,7 @@
 import { money } from "./money";
 import { monthYear } from "./dates";
 import { FREQUENCY_LABEL, type Frequency, type Goal } from "./schema";
+import type { Allocation, AllocationPlan } from "./allocate";
 import type {
   ExtraScenario,
   LumpSumScenario,
@@ -218,6 +219,100 @@ export function portfolioNotes(summary: PortfolioSummary, max = 3): string[] {
 
   return notes.slice(0, max);
 }
+
+/* ── Smart Allocation ────────────────────────────────────────────────────── */
+
+/**
+ * Why a goal got what it got, in one line. The engine's weighting never
+ * surfaces as a number — only the fact behind it, so the customer can see
+ * that their money followed their own priorities and deadlines.
+ */
+export function explainAllocation(allocation: Allocation): string {
+  const { reason, factors, impactMonths, name } = allocation;
+
+  switch (reason) {
+    case "complete":
+      return "Already fully funded.";
+    case "archived":
+      return "Archived goals aren't included.";
+    case "no-target":
+      return "No target amount set, so there's nothing to work towards yet.";
+
+    case "completes-goal":
+      return `This finishes ${name} outright.`;
+
+    case "back-on-track":
+      return impactMonths && impactMonths > 0
+        ? `Behind schedule — this brings it back on track, about ${describeMonths(impactMonths)} sooner.`
+        : "Behind schedule — this brings it back on track.";
+
+    case "catch-up-partial":
+      return impactMonths && impactMonths > 0
+        ? `Behind schedule, so it gets a larger share — about ${describeMonths(impactMonths)} sooner.`
+        : `Behind schedule, so it gets a larger share. It needs ${money(factors.catchUpCents)} to catch up fully.`;
+
+    case "small-top-up":
+      return `Only a little left to go, so this nearly finishes it.`;
+
+    case "deadline-soon":
+      return factors.monthsToTarget !== null
+        ? `Your nearest deadline — ${describeMonths(factors.monthsToTarget)} away — and currently on track.`
+        : "One of your nearer deadlines, and currently on track.";
+
+    case "high-priority":
+      return "A high-priority goal with a way to go yet.";
+
+    case "ahead-of-plan":
+      return allocation.amountCents > 0
+        ? "Already comfortably ahead of schedule, so it takes a smaller share."
+        : "Already comfortably ahead of schedule, so the money went elsewhere.";
+
+    case "nothing-left":
+      return "The money went to goals that needed it more.";
+
+    case "steady-share":
+    default:
+      return "A steady share towards this one.";
+  }
+}
+
+/** The headline: what this plan actually does. */
+export function explainPlan(plan: AllocationPlan): string {
+  if (plan.availableCents <= 0) {
+    return "Enter an amount and we'll suggest a way to spread it.";
+  }
+  if (plan.totalAllocatedCents === 0) {
+    return "There's nowhere to put this right now — every goal is either complete, archived, or has no target set.";
+  }
+
+  const parts: string[] = [];
+  if (plan.backOnTrackCount > 0) {
+    parts.push(
+      plan.backOnTrackCount === 1
+        ? "brings one goal back on track"
+        : `brings ${plan.backOnTrackCount} goals back on track`,
+    );
+  }
+  if (plan.monthsSaved > 0) {
+    parts.push(`saves about ${describeMonths(plan.monthsSaved)} across your goals`);
+  }
+
+  const head = `Here's one way to spread ${money(plan.totalAllocatedCents)}`;
+  if (parts.length === 0) return `${head}.`;
+  return `${head} — it ${parts.join(" and ")}.`;
+}
+
+/** Said plainly when money has nowhere sensible to go. */
+export function explainUnallocated(plan: AllocationPlan): string | null {
+  if (plan.unallocatedCents <= 0) return null;
+  return plan.totalAllocatedCents === 0
+    ? `All ${money(plan.unallocatedCents)} is unallocated.`
+    : `${money(plan.unallocatedCents)} is left over — your goals don't need any more than this.`;
+}
+
+/** Nothing changes until the customer says so. */
+export const ALLOCATION_NOTE_TEXT =
+  "Nothing changes until you apply the plan. Applying records these as contributions dated today.";
 
 /** The combined saving rate, stated the way a person would say it. */
 export const explainRate = (summary: PortfolioSummary): string =>

@@ -87,6 +87,38 @@ export function addContribution(
   );
 }
 
+/**
+ * Several contributions in one transition.
+ *
+ * Smart Allocation is a single user action, so it must land whole: the caller
+ * gets one new dataset with every contribution present, or the original
+ * dataset untouched. Going through addContribution in a loop would commit —
+ * and persist — each one separately, which can leave a half-applied plan if a
+ * later write fails.
+ */
+export function addContributions(
+  data: Dataset,
+  inputs: Array<{ goalId: string; amountCents: number; date: string; note?: string }>,
+  now = new Date(),
+): Dataset {
+  const usable = inputs.filter((i) => i.amountCents !== 0);
+  if (usable.length === 0) return data;
+
+  const created: Contribution[] = usable.map((input) => ({
+    id: newId(),
+    goalId: input.goalId,
+    amountCents: input.amountCents,
+    date: input.date,
+    note: input.note,
+    createdAt: now.toISOString(),
+  }));
+
+  return reconcileCompletion(
+    { ...data, contributions: [...data.contributions, ...created] },
+    now,
+  );
+}
+
 export function updateContribution(
   data: Dataset,
   id: string,

@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import {
   describeMonths,
   explainAgainstTarget,
+  explainAllocation,
+  explainPlan,
+  explainUnallocated,
   explainExtra,
   explainLumpSum,
   explainProjection,
@@ -19,6 +22,7 @@ import {
   simulateExtra,
   simulateLumpSum,
 } from "../forecast";
+import { smartAllocate } from "../allocate";
 import { monthYear } from "../dates";
 import { makeGoal, NOW } from "./helpers";
 
@@ -219,5 +223,81 @@ describe("portfolio notes", () => {
     assert.match(s, /a week/);
     noJargon(s);
     assert.match(explainRate(portfolioSummary([], [], NOW)), /No regular saving/);
+  });
+});
+
+describe("smart allocation in words", () => {
+  const behind = makeGoal({
+    id: "behind", name: "New Car", targetCents: 20_000_00, openingBalanceCents: 0,
+    contributionCents: 100_00, frequency: "monthly", targetDate: "2028-09-12",
+  });
+  const onTrack = makeGoal({
+    id: "ontrack", name: "Japan Trip", targetCents: 5000_00, openingBalanceCents: 0,
+    contributionCents: 500_00, frequency: "monthly", targetDate: "2027-06-12",
+  });
+  const done = makeGoal({
+    id: "done", name: "Emergency Fund", targetCents: 100_00, openingBalanceCents: 100_00,
+  });
+
+  const reasonFor = (plan: ReturnType<typeof smartAllocate>, id: string) =>
+    explainAllocation(plan.allocations.find((a) => a.goalId === id)!);
+
+  test("a behind goal is described as behind, never as a score", () => {
+    const plan = smartAllocate([behind, onTrack], [], 1000_00, NOW);
+    const s = reasonFor(plan, "behind");
+    assert.match(s, /[Bb]ehind schedule/);
+    noJargon(s);
+    assert.ok(!/\d+\s*(points|score|weight)/i.test(s), s);
+  });
+
+  test("a completed goal says it is already funded", () => {
+    const plan = smartAllocate([behind, done], [], 1000_00, NOW);
+    assert.match(reasonFor(plan, "done"), /[Aa]lready fully funded/);
+  });
+
+  test("an archived goal explains its exclusion", () => {
+    const archived = makeGoal({ id: "arch", name: "Old", archivedAt: "2026-01-01T00:00:00.000Z" });
+    const plan = smartAllocate([behind, archived], [], 1000_00, NOW);
+    assert.match(reasonFor(plan, "arch"), /[Aa]rchived goals aren't included/);
+  });
+
+  test("a goal with no target explains that too", () => {
+    const noTarget = makeGoal({ id: "nt", name: "Someday", targetCents: 0 });
+    const plan = smartAllocate([behind, noTarget], [], 1000_00, NOW);
+    assert.match(reasonFor(plan, "nt"), /[Nn]o target amount/);
+  });
+
+  test("an allocation that finishes a goal says so", () => {
+    const plan = smartAllocate([onTrack], [], 9000_00, NOW);
+    assert.match(reasonFor(plan, "ontrack"), /finishes Japan Trip outright/);
+  });
+
+  test("the plan headline states what it does", () => {
+    const plan = smartAllocate([behind, onTrack], [], 1000_00, NOW);
+    const s = explainPlan(plan);
+    assert.match(s, /Here's one way to spread \$1,000/);
+    noJargon(s);
+  });
+
+  test("nothing to allocate is explained, not blank", () => {
+    assert.match(explainPlan(smartAllocate([done], [], 1000_00, NOW)), /nowhere to put this/);
+    assert.match(explainPlan(smartAllocate([behind], [], 0, NOW)), /Enter an amount/);
+  });
+
+  test("leftover money is stated plainly", () => {
+    const plan = smartAllocate([onTrack], [], 99_000_00, NOW);
+    const s = explainUnallocated(plan);
+    assert.ok(s && /left over/.test(s), String(s));
+    noJargon(s!);
+    assert.equal(explainUnallocated(smartAllocate([behind], [], 100_00, NOW)), null);
+  });
+
+  test("no explanation leaks the internal weighting", () => {
+    const plan = smartAllocate([behind, onTrack, done], [], 1000_00, NOW);
+    for (const a of plan.allocations) {
+      const s = explainAllocation(a);
+      noJargon(s);
+      assert.ok(!/weight|score|factor|multiplier/i.test(s), `"${s}" exposed the maths`);
+    }
   });
 });
