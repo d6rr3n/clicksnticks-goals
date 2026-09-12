@@ -10,7 +10,7 @@ import { money } from "@/lib/money";
 import { fullDate, monthYear } from "@/lib/dates";
 import { ProgressBar } from "../ui/ProgressBar";
 import { StatusChip } from "../ui/StatusChip";
-import { ArrowRightIcon } from "../icons";
+import { ArrowRightIcon, SparkIcon } from "../icons";
 
 /**
  * One goal's forecast: the figures, then the same thing said in a sentence.
@@ -98,6 +98,13 @@ export function GoalForecastPanel({
 
       <div className="flex flex-wrap gap-2">
         <Link
+          href={`/what-if?goal=${encodeURIComponent(goal.id)}`}
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-[13px] text-on-primary no-underline transition-colors hover:bg-secondary"
+        >
+          <SparkIcon className="h-3.5 w-3.5" />
+          Try a What If
+        </Link>
+        <Link
           href={`/goals/${goal.id}`}
           className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-5 py-3 text-[13px] text-primary no-underline transition-colors hover:bg-background"
         >
@@ -108,7 +115,8 @@ export function GoalForecastPanel({
 
       {projection.kind === "projected" && against !== null && against < 0 && (
         <p className="text-[12px] text-muted">
-          Your target is {monthYear(goal.targetDate)}.
+          Your target is {monthYear(goal.targetDate)}. A What If can show what it
+          would take to get there.
         </p>
       )}
     </div>

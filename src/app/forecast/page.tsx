@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { FirstRunChoice } from "@/components/FirstRunChoice";
 import { Skeleton } from "@/components/Skeleton";
@@ -11,7 +12,7 @@ import { PortfolioTiles } from "@/components/forecast/PortfolioTiles";
 import { ButtonLink } from "@/components/ui/Button";
 import { Field, inputClass } from "@/components/ui/Field";
 import { Panel } from "@/components/ui/Panel";
-import { PlusIcon } from "@/components/icons";
+import { PlusIcon, SparkIcon } from "@/components/icons";
 import { useGoals, useNow } from "@/lib/store/GoalsStore";
 import { isComplete, portfolioForecast } from "@/lib/calc";
 import { portfolioSummary } from "@/lib/forecast";
@@ -132,7 +133,7 @@ export default function ForecastPage() {
         <ForecastTimeline forecast={forecast} />
       </Panel>
 
-      <Panel title="Goal forecast">
+      <Panel title="Goal forecast" action={{ href: "/what-if", label: "Open What If" }}>
         <div className="flex flex-col gap-4">
           <div className="max-w-sm">
             <Field label="Goal">
@@ -164,6 +165,19 @@ export default function ForecastPage() {
         </div>
       </Panel>
 
+      <Link
+        href="/what-if"
+        className="flex flex-wrap items-center gap-3 rounded-card bg-primary px-5 py-4 text-on-primary no-underline transition-colors hover:bg-secondary"
+      >
+        <SparkIcon className="h-5 w-5 shrink-0 text-tint" />
+        <span className="font-display text-[18px] font-semibold">What If?</span>
+        <span className="text-[13px] text-on-primary/75">
+          Try saving more, adding a lump sum, or working backwards from a date.
+        </span>
+        <span aria-hidden className="ml-auto text-[13px]">
+          →
+        </span>
+      </Link>
     </>
   );
 }
