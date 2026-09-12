@@ -85,7 +85,7 @@ export default function DashboardPage() {
             <Panel title="Savings Forecast">
               <ForecastChart series={series} />
             </Panel>
-            <WhatIf goals={data.goals} contributions={data.contributions} />
+            <WhatIf goals={data.goals} contributions={data.contributions} now={now} />
             {focus ? (
               <TodaysFocus goal={focus} contributions={data.contributions} now={now} />
             ) : (

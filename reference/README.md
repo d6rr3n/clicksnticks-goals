@@ -91,6 +91,23 @@ product, needs no network request, and cannot fail to load.
 
 Photography that would improve the product is listed in the project README.
 
+## Forecast and What If
+
+Two routes beyond the locked dashboard:
+
+- **`/forecast`** — portfolio summary, monthly timeline with goal milestones and
+  keyboard-inspectable dates, and a per-goal forecast. Reached from the sidebar,
+  between My Goals and Challenges.
+- **`/what-if`** — the simulator. No sidebar item of its own; reached from the
+  dashboard What If card and from Forecast.
+
+Both use the locked Sage Edition tokens and the existing component language —
+panels, stat tiles, progress bars, status chips, dialogs.
+
+Real calculations always take precedence over the mockup's illustrative
+figures. Where a correct result is surprising, it is explained (the dashboard
+card shows both dates beneath a large saving), never adjusted.
+
 ## Open item
 
 The logo tagline reads `PLAN ORGANISE ACHIEVE`; the dashboard sidebar reads

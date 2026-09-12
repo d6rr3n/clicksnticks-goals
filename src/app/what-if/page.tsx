@@ -13,6 +13,7 @@ import { Panel } from "@/components/ui/Panel";
 import { PlusIcon } from "@/components/icons";
 import { useGoals, useNow } from "@/lib/store/GoalsStore";
 import { isComplete } from "@/lib/calc";
+import { FREQUENCIES, type Frequency } from "@/lib/schema";
 
 function WhatIfContent() {
   const { mode, hydrated, data } = useGoals();
@@ -21,6 +22,15 @@ function WhatIfContent() {
 
   if (!hydrated) return <Skeleton />;
   if (mode === "unset") return <FirstRunChoice />;
+
+  // Query values are untrusted: anything unexpected falls back to the default.
+  const extraParam = Number(params.get("extra"));
+  const initialExtraCents =
+    Number.isFinite(extraParam) && extraParam > 0 ? Math.round(extraParam) : undefined;
+  const freqParam = params.get("freq");
+  const initialFrequency = FREQUENCIES.includes(freqParam as Frequency)
+    ? (freqParam as Frequency)
+    : undefined;
 
   const live = data.goals.filter((g) => !g.archivedAt);
   const unfinished = live.filter((g) => !isComplete(g, data.contributions));
@@ -69,6 +79,8 @@ function WhatIfContent() {
           contributions={data.contributions}
           now={now}
           initialGoalId={params.get("goal") ?? undefined}
+          initialExtraCents={initialExtraCents}
+          initialFrequency={initialFrequency}
         />
       )}
     </>

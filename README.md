@@ -66,6 +66,40 @@ otherwise a category illustration drawn as inline SVG from edition tokens. The
 illustration themes with the product, needs no network request, and cannot fail
 to load, so a missing image never breaks the layout.
 
+## Forecast and What If
+
+**One forecast engine.** The portfolio is walked a month at a time in
+`calc.ts`, recording a milestone where each goal lands. The dashboard's yearly
+series is a *sample* of that walk, pinned by a golden test so it cannot drift.
+
+**One definition of "how long".** Projections and every What If scenario go
+through `monthsToClear`, so a scenario can never disagree with the projection
+shown elsewhere.
+
+**Weekly and fortnightly convert at 52 and 26 payments a year** (`PER_MONTH`),
+not 4 and 2 a month. This monthly-average model is the V1 approach; there is
+deliberately no competing discrete-payment engine.
+
+A goal's state is a typed union — `complete`, `unable` (no contribution set) or
+`projected` — so the UI never blurs "finished" with "cannot be projected".
+
+### Scenarios (`forecast.ts`)
+
+Nothing in that file writes. Scenarios are exploratory; applying one is a
+separate, explicit action that edits the goal's plan and **never moves money or
+writes a contribution**. Lump sums are therefore not appliable at all — they
+point at Quick Add instead.
+
+`requiredRate` solves backwards from a date, counting payments the same way the
+forward projection counts them. **Every required figure rounds up**: rounding
+down would leave the target short by cents.
+
+### Explanations (`explain.ts`)
+
+Plain sentences built deterministically from the numbers. Nothing is generated
+or phrased by a model. Tests assert the sentences never leak internal
+vocabulary, and that surprising results are explained rather than softened.
+
 ## How the data works
 
 **The contribution ledger is the only record of money.** A goal stores an

@@ -42,18 +42,24 @@ export function WhatIfSimulator({
   contributions,
   now,
   initialGoalId,
+  initialExtraCents,
+  initialFrequency,
 }: {
   goals: Goal[];
   contributions: Contribution[];
   now: Date;
   initialGoalId?: string;
+  initialExtraCents?: number;
+  initialFrequency?: Frequency;
 }) {
   const [goalId, setGoalId] = useState(
     goals.find((g) => g.id === initialGoalId)?.id ?? goals[0]?.id ?? "",
   );
   const [tab, setTab] = useState<Tab>("more");
-  const [extraCents, setExtraCents] = useState(50_00);
-  const [extraFrequency, setExtraFrequency] = useState<Frequency>("weekly");
+  const [extraCents, setExtraCents] = useState(initialExtraCents ?? 50_00);
+  const [extraFrequency, setExtraFrequency] = useState<Frequency>(
+    initialFrequency ?? "weekly",
+  );
   const [lumpCents, setLumpCents] = useState(1000_00);
   const [byDate, setByDate] = useState("");
   const [byFrequency, setByFrequency] = useState<Frequency>("weekly");
