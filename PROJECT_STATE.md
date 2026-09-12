@@ -4,11 +4,12 @@ Last updated: 12 September 2026
 
 ## Status
 
-**Challenges V1 implemented. Waiting for product review.**
+**Challenges V1 implemented, first review round addressed. Waiting for
+product review.**
 
-The planning checkpoint for issue #1 was approved with three changes, all of
-which are implemented. The issue stays open until Darren and ChatGPT have
-reviewed the result.
+The planning checkpoint for issue #1 was approved with three changes; review
+round one requested three more. All six are implemented. The issue stays open
+until Darren and ChatGPT have reviewed the result.
 
 ## Approved and locked
 
@@ -38,6 +39,8 @@ Commits on `claude/sharp-goldberg-vd8esd`, oldest first:
 | `f31279b` | Generation, explanations, validation and tests |
 | `cc97ec4` | Challenges pages and the real dashboard card |
 | `defd779` | Two copy fixes found by opening the pages |
+| `18a75c9` | First `PROJECT_STATE.md` / `LOCKED.md` update |
+| `e1ae4c2` | The three fixes from the first review round |
 
 **Design.** A challenge stores a schedule, never a balance. Which steps are
 ticked and how much has been saved are both derived from the contribution
@@ -65,22 +68,44 @@ future-version quarantine path in any older build.
 checkpoint: `schema.ts`, `storage.ts`, `GoalsStore.tsx`, `mutations.ts`.
 Forecast, What If and Smart Allocation algorithms are unchanged.
 
-### Verification at `defd779`
+### Review round one — three changes requested, all made in `e1ae4c2`
 
-- `npm run build` — clean, 16 routes.
+1. **Restore could break one-challenge-per-goal.** Archive a challenge, start
+   a replacement, restore the first, and the goal had two running. Restore is
+   now refused while another is running and says why. The replacement is never
+   archived or deleted to make room.
+2. **A step could overshoot a nearly funded goal.** `completeStep` checked only
+   whether the goal was already complete, so a $10 step against a $5 shortfall
+   recorded the full $10. It is now capped at what the goal needs: the goal
+   lands exactly on target, the step keeps its own link so it reverses
+   normally, and the grid marks it as differing from the plan.
+3. **The approved edit lifecycle was not in the UI.** `/challenges/[id]/edit`
+   now offers name and start date always, and the schedule only until a step
+   has recorded money — after which the controls are gone and the page
+   explains why.
+
+The asterisk in the grid can now mean two things, so its footnote names both.
+
+### Verification at `e1ae4c2`
+
+- `npm run build` — clean, 17 routes.
 - `npx eslint src scripts --max-warnings=0` — clean.
-- `TZ=UTC npm test` — 383 tests, 383 pass.
-- `TZ=Australia/Sydney npm test` — 383 tests, 383 pass.
+- `TZ=UTC npm test` — 410 tests, 410 pass.
+- `TZ=Australia/Sydney npm test` — 410 tests, 410 pass.
 
-103 of those tests are new (280 → 383) and cover the brief's list: $1,378 in both
+130 of those tests are new (280 → 410) and cover the brief's list: $1,378 in both
 directions, cent-perfect custom totals, deterministic generation, one
 contribution per step, no duplication on repeat ticks or reload, reversal that
 touches only its own linked row, ineligible goals refused, the funded and
 archived edge cases, edit and delete integrity, forecast impact, and
 persistence across a reload including data written before challenges existed.
 
-The pages were also driven in a real browser: no console or page errors, no
-horizontal overflow at 390px, and the funded-goal pause confirmed end to end.
+The pages were also driven in a real browser at desktop and 390px: no console
+or page errors, no horizontal overflow, and each of the three review fixes
+confirmed end to end — a $1,500 step recorded as the $80 the goal actually
+needed and landing it exactly on target, restore disabled with its
+explanation while a replacement runs and re-enabled once that is archived,
+and the edit form both locked and open.
 
 ## Not yet built
 
