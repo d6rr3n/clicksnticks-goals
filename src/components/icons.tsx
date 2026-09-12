@@ -115,3 +115,17 @@ export const SparkIcon = ({ className }: IconProps) => (
     <path d="M9.6 9.2a2.5 2.5 0 1 1 3.3 2.4c-.6.2-.9.8-.9 1.4v.4M12 16.8v.01" />
   </svg>
 );
+
+export const TrendIcon = ({ className }: IconProps) => (
+  <svg viewBox="0 0 24 24" className={base(className)} {...S} aria-hidden>
+    <path d="M3 17l5.5-5.5 3.5 3.5L21 6" />
+    <path d="M15 6h6v6" />
+  </svg>
+);
+
+export const FlagPinIcon = ({ className }: IconProps) => (
+  <svg viewBox="0 0 24 24" className={base(className)} {...S} aria-hidden>
+    <path d="M6 21V4" />
+    <path d="M6 5h11l-2 3.5L17 12H6" />
+  </svg>
+);

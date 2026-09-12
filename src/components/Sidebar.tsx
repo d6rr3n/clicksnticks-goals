@@ -8,12 +8,14 @@ import {
   HomeIcon,
   SettingsIcon,
   TargetIcon,
+  TrendIcon,
   TrophyIcon,
 } from "./icons";
 
 const NAV = [
   { href: "/", label: "Dashboard", Icon: HomeIcon },
   { href: "/goals", label: "My Goals", Icon: TargetIcon },
+  { href: "/forecast", label: "Forecast", Icon: TrendIcon },
   { href: "/challenges", label: "Challenges", Icon: TrophyIcon },
   { href: "/calendar", label: "Calendar", Icon: CalendarIcon },
   { href: "/insights", label: "Insights", Icon: ChartIcon },
