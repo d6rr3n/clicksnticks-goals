@@ -1,7 +1,13 @@
 import { money } from "./money";
 import { monthYear } from "./dates";
-import { FREQUENCY_LABEL, type Frequency, type Goal } from "./schema";
+import { FREQUENCY_LABEL, type ChallengeCadence, type Frequency, type Goal } from "./schema";
 import type { Allocation, AllocationPlan } from "./allocate";
+import type {
+  ChallengeImpact,
+  ChallengeIneligibility,
+  ChallengeProgress,
+  TickBlock,
+} from "./challenges";
 import type {
   ExtraScenario,
   LumpSumScenario,
@@ -346,6 +352,91 @@ export function explainUnallocated(plan: AllocationPlan): string | null {
 /** Nothing changes until the customer says so. */
 export const ALLOCATION_NOTE_TEXT =
   "Nothing changes until you apply the plan. Applying records these as contributions dated today.";
+
+/* ── Challenges ──────────────────────────────────────────────────────────── */
+
+/**
+ * What a challenge has done to its goal so far.
+ *
+ * Durations are whole months because whole months are the precision the
+ * forecast actually has. A challenge that has not yet moved the finish date
+ * says so plainly rather than reaching for a smaller-sounding unit to fill
+ * the silence — the money saved is a real result on its own.
+ */
+export function explainChallengeImpact(
+  impact: ChallengeImpact,
+  goalName: string,
+): string {
+  if (impact.savedCents <= 0)
+    return `Tick your first step and we'll show you what it does to ${goalName}.`;
+
+  const saved = money(impact.savedCents);
+  if (impact.after.kind === "complete")
+    return `${saved} of ${goalName} came from this challenge, and it's fully funded.`;
+
+  if (impact.monthsSaved === null)
+    return `${saved} of ${goalName} has come from this challenge. Set a regular contribution on the goal to see the effect on its finish date.`;
+
+  if (impact.monthsSaved === 0)
+    return `${saved} in. That hasn't moved ${goalName}'s finish date by a full month yet — keep going.`;
+
+  return `This challenge has moved ${goalName} ${describeMonths(impact.monthsSaved)} closer.`;
+}
+
+/** What finishing the rest of it would do. Null when there is nothing left. */
+export function explainChallengeIfFinished(
+  impact: ChallengeImpact,
+  goalName: string,
+): string | null {
+  if (impact.remainingCents <= 0) return null;
+
+  const rest = money(impact.remainingCents);
+  if (impact.ifFinished.kind === "complete")
+    return `The remaining ${rest} would fully fund ${goalName}.`;
+
+  if (impact.ifFinishedExtraMonths === null || impact.ifFinishedExtraMonths === 0)
+    return `${rest} to go on this challenge.`;
+
+  return `Finishing the remaining ${rest} would bring ${goalName} forward another ${describeMonths(impact.ifFinishedExtraMonths)}.`;
+}
+
+/** "18 of 52 weeks ticked · $171 saved". */
+export function explainChallengeProgress(
+  progress: ChallengeProgress,
+  cadence: ChallengeCadence,
+): string {
+  const unit = cadence === "weekly" ? "week" : "day";
+  const plural = progress.totalSteps === 1 ? unit : `${unit}s`;
+  return `${progress.stepsDone} of ${progress.totalSteps} ${plural} ticked · ${money(progress.savedCents)} saved`;
+}
+
+/** Why the next step cannot be ticked. Stated as a fact, never as a telling-off. */
+export const CHALLENGE_TICK_BLOCK_TEXT: Record<TickBlock, string> = {
+  "goal-funded":
+    "This goal is fully funded, so the challenge is paused here. Nothing you've saved is lost, and it picks up again if the goal drops back below its target.",
+  "goal-archived":
+    "This goal is archived, so the challenge is paused. Restore the goal to carry on.",
+  "challenge-archived":
+    "This challenge is archived. Everything it saved is still on the goal.",
+  "goal-missing": "The goal this challenge saved towards no longer exists.",
+};
+
+/** Why a goal can't take a new challenge. */
+export const CHALLENGE_INELIGIBILITY_TEXT: Record<ChallengeIneligibility, string> = {
+  archived: "Archived",
+  "no-target": "No target amount set",
+  complete: "Already fully funded",
+  "has-challenge": "Already has a challenge running",
+};
+
+/** Deleting a challenge takes its money with it, so the number is named. */
+export const explainChallengeDeletion = (
+  savedCents: number,
+  goalName: string,
+): string =>
+  savedCents > 0
+    ? `This also removes the ${money(savedCents)} this challenge added to ${goalName}. To keep that money on the goal, archive the challenge instead.`
+    : `This challenge hasn't recorded any money, so nothing leaves ${goalName}.`;
 
 /** The combined saving rate, stated the way a person would say it. */
 export const explainRate = (summary: PortfolioSummary): string =>
