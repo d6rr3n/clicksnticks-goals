@@ -22,6 +22,7 @@ import {
   eligibleGoalsForChallenge,
   generateSteps,
   sprintDefaultCents,
+  weeksUntil,
   type ChallengeSpec,
 } from "@/lib/challenges";
 import { CHALLENGE_INELIGIBILITY_TEXT } from "@/lib/explain";
@@ -31,6 +32,7 @@ import {
   isValid,
   validateChallenge,
   type ChallengeField,
+  type ChallengeLength,
   type Errors,
 } from "@/lib/validate";
 
@@ -62,6 +64,9 @@ export function NewChallengeForm() {
   /** Null means "use the suggestion"; a string means the customer typed it. */
   const [target, setTarget] = useState<string | null>(null);
   const [weeks, setWeeks] = useState("20");
+  /** Count the weeks, or name the day the money is needed. */
+  const [length, setLength] = useState<ChallengeLength>("weeks");
+  const [finishDate, setFinishDate] = useState("");
   const [startDate, setStartDate] = useState<string | null>(null);
   const [errors, setErrors] = useState<Errors<ChallengeField>>({});
 
@@ -90,12 +95,18 @@ export function NewChallengeForm() {
     name: effectiveName,
     target: effectiveTarget,
     weeks,
+    length,
+    finishDate,
     startDate: effectiveStart,
   };
 
   const customisable = type === "custom-weekly" || type === "goal-sprint";
   const targetCents = parseAmount(effectiveTarget);
-  const weekCount = Number(weeks);
+  // A deadline is just another way of saying how many payments there are.
+  const weekCount =
+    length === "date"
+      ? (weeksUntil(effectiveStart, finishDate) ?? 0)
+      : Number(weeks);
 
   // Only previewed once the numbers behind it are sound.
   const preview = isValid(validateChallenge(input, now))
@@ -250,17 +261,70 @@ export function NewChallengeForm() {
           )}
 
           {type === "custom-weekly" && (
-            <Field label="Over how many weeks" error={errors.weeks}>
-              {(props) => (
-                <input
-                  {...props}
-                  inputMode="numeric"
-                  value={weeks}
-                  onChange={(e) => setWeeks(e.target.value)}
-                  className={inputClass(Boolean(errors.weeks))}
-                />
+            <div className="flex flex-col gap-3">
+              <fieldset className="m-0 border-0 p-0">
+                <legend className="mb-1.5 text-[11px] font-medium tracking-[0.12em] text-muted">
+                  HOW LONG YOU HAVE
+                </legend>
+                <div className="flex flex-wrap gap-2">
+                  {(
+                    [
+                      ["weeks", "A number of weeks"],
+                      ["date", "I need it by a date"],
+                    ] as const
+                  ).map(([value, label]) => (
+                    <label
+                      key={value}
+                      className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2.5 text-[13px] transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-secondary ${
+                        length === value
+                          ? "border-secondary bg-tint-soft/50"
+                          : "border-border bg-surface hover:border-secondary"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="challenge-length"
+                        value={value}
+                        checked={length === value}
+                        onChange={() => setLength(value)}
+                        className="h-3.5 w-3.5 accent-[var(--color-primary)]"
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
+              {length === "weeks" ? (
+                <Field label="Over how many weeks" error={errors.weeks}>
+                  {(props) => (
+                    <input
+                      {...props}
+                      inputMode="numeric"
+                      value={weeks}
+                      onChange={(e) => setWeeks(e.target.value)}
+                      className={inputClass(Boolean(errors.weeks))}
+                    />
+                  )}
+                </Field>
+              ) : (
+                <Field
+                  label="I need the money by"
+                  error={errors.finishDate}
+                  hint="Every payment lands on or before this day. We'll work out how many there are and what each one costs."
+                >
+                  {(props) => (
+                    <input
+                      {...props}
+                      type="date"
+                      value={finishDate}
+                      onChange={(e) => setFinishDate(e.target.value)}
+                      className={dateInputClass(Boolean(errors.finishDate))}
+                    />
+                  )}
+                </Field>
               )}
-            </Field>
+            </div>
           )}
 
           <Field
@@ -322,7 +386,10 @@ function SchedulePreview({
   const perStep = type === "goal-sprint" ? 1 : 7;
   const lastDate = addDays(startDate, (steps.length - 1) * perStep);
   const unit = type === "goal-sprint" ? "day" : "week";
-  const flat = steps.every((c) => c === steps[0]);
+  // A cent of difference is the remainder being shared out, not a progression,
+  // so it reads as one payment amount rather than a climb from first to last.
+  const spread = Math.max(...steps) - Math.min(...steps);
+  const even = spread <= 1;
 
   return (
     <Panel title="What you're signing up to">
@@ -330,11 +397,13 @@ function SchedulePreview({
         <Figure label="TOTAL" value={money(total)} />
         <Figure label="STEPS" value={`${steps.length} ${unit}${steps.length === 1 ? "" : "s"}`} />
         <Figure
-          label={flat ? "EACH STEP" : "FIRST TO LAST"}
+          label={even ? "EACH PAYMENT" : "FIRST TO LAST"}
           value={
-            flat
+            spread === 0
               ? moneyExact(steps[0])
-              : `${moneyExact(steps[0])} → ${moneyExact(steps[steps.length - 1])}`
+              : even
+                ? `${moneyExact(Math.min(...steps))}–${moneyExact(Math.max(...steps))}`
+                : `${moneyExact(steps[0])} → ${moneyExact(steps[steps.length - 1])}`
           }
         />
         <Figure label="LAST STEP" value={fullDate(lastDate)} />

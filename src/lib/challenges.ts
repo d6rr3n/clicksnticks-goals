@@ -51,6 +51,32 @@ export function addDays(iso: string, days: number): string {
 export const stepDueDate = (challenge: Challenge, step: number): string =>
   addDays(challenge.startDate, step * CADENCE_DAYS[challenge.cadence]);
 
+/** Whole days from one date-only value to another. Negative if it runs back. */
+export function daysBetween(fromISO: string, toISO: string): number {
+  const MS_PER_DAY = 24 * 60 * 60 * 1000;
+  return Math.round(
+    (parseDate(toISO).getTime() - parseDate(fromISO).getTime()) / MS_PER_DAY,
+  );
+}
+
+/**
+ * How many weekly steps fit between a start date and a deadline.
+ *
+ * Step n falls due on `start + n × 7`, so the last of W steps lands on
+ * `start + (W − 1) × 7`. W is therefore the largest count whose last step is
+ * still on or before the deadline — the money is all in by the day it is
+ * needed, never the week after. A deadline on the start date itself is one
+ * step, not zero.
+ *
+ * Null when the deadline is before the start, which is a question with no
+ * sensible answer rather than a zero-week challenge.
+ */
+export function weeksUntil(startISO: string, deadlineISO: string): number | null {
+  const days = daysBetween(startISO, deadlineISO);
+  if (days < 0) return null;
+  return Math.floor(days / 7) + 1;
+}
+
 export const cadenceOf = (type: ChallengeType): ChallengeCadence =>
   type === "goal-sprint" ? "daily" : "weekly";
 

@@ -7,6 +7,7 @@ import {
   challengeImpact,
   challengeIneligibility,
   challengeProgress,
+  daysBetween,
   eligibleGoalsForChallenge,
   featuredChallenge,
   FIFTY_TWO_WEEK_TOTAL_CENTS,
@@ -19,6 +20,7 @@ import {
   stepDueDate,
   stepNote,
   tickBlock,
+  weeksUntil,
   type ChallengeSpec,
 } from "../challenges";
 import { monthlyRateCents, remainingCents } from "../calc";
@@ -737,5 +739,116 @@ describe("pausing when there is nothing left to save", () => {
     assert.match(text, /only needed part/i);
     assert.match(text, /edited the row/i);
     assert.match(text, /Japan Trip/);
+  });
+});
+
+/* ── Saving to a deadline ────────────────────────────────────────────────── */
+
+describe("working out the weeks from a deadline", () => {
+  test("a deadline on the start date is a single payment", () => {
+    assert.equal(weeksUntil("2026-09-14", "2026-09-14"), 1);
+  });
+
+  test("every step lands on or before the deadline", () => {
+    for (const [start, deadline] of [
+      ["2026-09-14", "2026-09-20"],
+      ["2026-09-14", "2026-09-21"],
+      ["2026-09-14", "2026-12-25"],
+      ["2026-09-14", "2027-09-14"],
+      ["2026-10-01", "2026-10-31"],
+    ] as const) {
+      const weeks = weeksUntil(start, deadline)!;
+      const last = addDays(start, (weeks - 1) * 7);
+      assert.ok(last <= deadline, `${weeks} weeks from ${start} ends ${last}, past ${deadline}`);
+      // And one more step would overshoot, so this is the most that fit.
+      assert.ok(addDays(start, weeks * 7) > deadline, `${start}→${deadline} could fit more`);
+    }
+  });
+
+  test("a week's gap is two payments, not one", () => {
+    // Money on the 14th and on the 21st: both on or before the deadline.
+    assert.equal(weeksUntil("2026-09-14", "2026-09-21"), 2);
+    assert.equal(weeksUntil("2026-09-14", "2026-09-20"), 1);
+  });
+
+  test("a year ahead is 53 payments", () => {
+    assert.equal(weeksUntil("2026-09-14", "2027-09-14"), 53);
+  });
+
+  test("a deadline before the start has no answer", () => {
+    assert.equal(weeksUntil("2026-09-14", "2026-09-13"), null);
+    assert.equal(weeksUntil("2026-09-14", "2025-01-01"), null);
+  });
+
+  test("counting survives a daylight-saving change", () => {
+    // Australian DST starts 4 Oct 2026 and ends 5 Apr 2026.
+    assert.equal(daysBetween("2026-10-03", "2026-10-05"), 2);
+    assert.equal(daysBetween("2026-04-04", "2026-04-06"), 2);
+    assert.equal(weeksUntil("2026-09-27", "2026-10-11"), 3);
+  });
+
+  test("the deadline and the target together give a cent-perfect plan", () => {
+    const weeks = weeksUntil("2026-09-14", "2026-12-25")!;
+    const steps = generateSteps({ type: "custom-weekly", targetCents: 2000_00, weeks });
+    assert.equal(steps.length, weeks);
+    assert.equal(total(steps), 2000_00);
+    assert.ok(addDays("2026-09-14", (weeks - 1) * 7) <= "2026-12-25");
+  });
+});
+
+describe("validating a deadline-driven challenge", () => {
+  const base = {
+    type: "custom-weekly" as const,
+    goalId: "g1",
+    name: "Bali",
+    target: "2000",
+    weeks: "",
+    length: "date" as const,
+    startDate: "2026-09-14",
+    finishDate: "2026-12-25",
+  };
+
+  test("a target and a deadline are enough — no week count needed", () => {
+    assert.ok(isValid(validateChallenge(base, NOW)));
+  });
+
+  test("the deadline is required in this mode", () => {
+    assert.ok(validateChallenge({ ...base, finishDate: "" }, NOW).finishDate);
+  });
+
+  test("a deadline before the start is refused", () => {
+    const e = validateChallenge({ ...base, finishDate: "2026-09-13" }, NOW);
+    assert.match(e.finishDate!, /before the challenge starts/i);
+  });
+
+  test("a deadline on the start date is one payment, not an error", () => {
+    const input = { ...base, finishDate: "2026-09-14" };
+    assert.ok(isValid(validateChallenge(input, NOW)));
+    assert.equal(weeksUntil(input.startDate, input.finishDate), 1);
+  });
+
+  test("a date that doesn't exist is caught", () => {
+    assert.ok(validateChallenge({ ...base, finishDate: "2026-02-31" }, NOW).finishDate);
+    assert.ok(validateChallenge({ ...base, finishDate: "25/12/2026" }, NOW).finishDate);
+  });
+
+  test("a deadline beyond the five-year cap is refused", () => {
+    const e = validateChallenge({ ...base, finishDate: "2036-12-25" }, NOW);
+    assert.match(e.finishDate!, /more than 260 weeks/i);
+  });
+
+  test("a nonsense week count is ignored while saving to a deadline", () => {
+    assert.ok(isValid(validateChallenge({ ...base, weeks: "not a number" }, NOW)));
+  });
+
+  test("a target too small to give every payment a cent is still refused", () => {
+    // 15 weeks to Christmas, so 14 cents cannot cover them.
+    const e = validateChallenge({ ...base, target: "0.14" }, NOW);
+    assert.ok(e.target);
+  });
+
+  test("counting weeks still works when the deadline is left blank", () => {
+    const counting = { ...base, length: "weeks" as const, weeks: "20", finishDate: "" };
+    assert.ok(isValid(validateChallenge(counting, NOW)));
   });
 });

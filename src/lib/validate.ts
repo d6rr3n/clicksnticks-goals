@@ -1,7 +1,7 @@
 import { CATEGORIES, FREQUENCIES, PRIORITIES, type Category, type ChallengeType, type Frequency, type Priority } from "./schema";
 import { parseAmount } from "./money";
 import { parseDate, toISODate } from "./dates";
-import { SPRINT_DAYS } from "./challenges";
+import { SPRINT_DAYS, weeksUntil } from "./challenges";
 
 /** Field name to message. Empty object means valid. */
 export type Errors<T extends string> = Partial<Record<T, string>>;
@@ -134,7 +134,17 @@ export function validateContribution(
   return e;
 }
 
-export type ChallengeField = "type" | "goalId" | "name" | "target" | "weeks" | "startDate";
+export type ChallengeField =
+  | "type"
+  | "goalId"
+  | "name"
+  | "target"
+  | "weeks"
+  | "finishDate"
+  | "startDate";
+
+/** How the customer chose to express how long a custom challenge runs. */
+export type ChallengeLength = "weeks" | "date";
 
 export interface ChallengeInput {
   type: ChallengeType | "";
@@ -142,12 +152,74 @@ export interface ChallengeInput {
   name: string;
   /** Customisable types only. */
   target: string;
-  /** Custom weekly only. */
+  /** Custom weekly, when counting weeks. */
   weeks: string;
+  /** Custom weekly, when saving to a deadline. Defaults to counting weeks. */
+  length?: ChallengeLength;
+  finishDate?: string;
   startDate: string;
 }
 
 const WEEKS_MAX = 260; // five years, past which "weekly challenge" stops meaning much
+
+/** Zero means "unusable", so the per-step check below knows to stay quiet. */
+function weeksFromCount(
+  input: ChallengeInput,
+  e: Errors<ChallengeField>,
+): number {
+  const weeks = Number(input.weeks);
+  if (input.weeks.trim() === "" || !Number.isInteger(weeks)) {
+    e.weeks = "Enter a whole number of weeks.";
+    return 0;
+  }
+  if (weeks < 1) {
+    e.weeks = "A challenge needs at least one week.";
+    return 0;
+  }
+  if (weeks > WEEKS_MAX) {
+    e.weeks = `Keep it to ${WEEKS_MAX} weeks or fewer.`;
+    return 0;
+  }
+  return weeks;
+}
+
+/**
+ * Saving to a deadline: the customer names the day they need the money, and
+ * the number of payments falls out of it. Every payment lands on or before
+ * that day — the point of a deadline is that the money is there for it.
+ */
+function weeksFromDeadline(
+  input: ChallengeInput,
+  e: Errors<ChallengeField>,
+): number {
+  const finish = input.finishDate ?? "";
+  if (!finish) {
+    e.finishDate = "Choose the date you need the money by.";
+    return 0;
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(finish)) {
+    e.finishDate = "Enter the date as YYYY-MM-DD.";
+    return 0;
+  }
+  const parsed = parseDate(finish);
+  if (Number.isNaN(parsed.getTime()) || toISODate(parsed) !== finish) {
+    e.finishDate = "That date isn't valid.";
+    return 0;
+  }
+  // A broken start date is already reported; don't pile a second error on it.
+  if (e.startDate) return 0;
+
+  const weeks = weeksUntil(input.startDate, finish);
+  if (weeks === null) {
+    e.finishDate = "That's before the challenge starts.";
+    return 0;
+  }
+  if (weeks > WEEKS_MAX) {
+    e.finishDate = `That's more than ${WEEKS_MAX} weeks away.`;
+    return 0;
+  }
+  return weeks;
+}
 
 /**
  * A challenge is only as honest as its arithmetic, so the awkward rule here is
@@ -191,22 +263,12 @@ export function validateChallenge(
 
   let steps = SPRINT_DAYS;
   if (input.type === "custom-weekly") {
-    const weeks = Number(input.weeks);
-    if (input.weeks.trim() === "" || !Number.isInteger(weeks)) {
-      e.weeks = "Enter a whole number of weeks.";
-      steps = 0;
-    } else if (weeks < 1) {
-      e.weeks = "A challenge needs at least one week.";
-      steps = 0;
-    } else if (weeks > WEEKS_MAX) {
-      e.weeks = `Keep it to ${WEEKS_MAX} weeks or fewer.`;
-      steps = 0;
-    } else {
-      steps = weeks;
-    }
+    steps = input.length === "date"
+      ? weeksFromDeadline(input, e)
+      : weeksFromCount(input, e);
   }
 
-  if (!e.target && !e.weeks && target !== null && steps > 0 && target < steps) {
+  if (!e.target && !e.weeks && !e.finishDate && target !== null && steps > 0 && target < steps) {
     const unit = input.type === "custom-weekly" ? "week" : "day";
     e.target = `That's less than a cent a ${unit}. Raise the target or shorten the challenge.`;
   }
