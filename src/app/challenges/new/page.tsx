@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Suspense } from "react";
 import { FirstRunChoice } from "@/components/FirstRunChoice";
 import { Skeleton } from "@/components/Skeleton";
 import { StoreNotices } from "@/components/StoreNotices";
@@ -29,7 +30,10 @@ export default function NewChallengePage() {
         </h1>
       </header>
 
-      <NewChallengeForm />
+      {/* The form reads ?goal= after a detour to create one. */}
+      <Suspense fallback={<Skeleton />}>
+        <NewChallengeForm />
+      </Suspense>
     </>
   );
 }

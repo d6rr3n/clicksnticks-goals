@@ -1,13 +1,24 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { FirstRunChoice } from "@/components/FirstRunChoice";
 import { Skeleton } from "@/components/Skeleton";
 import { GoalForm } from "@/components/goals/GoalForm";
 import { useGoals } from "@/lib/store/GoalsStore";
 
 export default function NewGoalPage() {
+  return (
+    <Suspense fallback={<Skeleton />}>
+      <NewGoal />
+    </Suspense>
+  );
+}
+
+function NewGoal() {
   const { mode, hydrated } = useGoals();
+  const next = useSearchParams().get("next") ?? undefined;
 
   if (!hydrated) return <Skeleton />;
   if (mode === "unset") return <FirstRunChoice />;
@@ -16,10 +27,10 @@ export default function NewGoalPage() {
     <>
       <header className="rounded-panel bg-gradient-to-br from-[var(--edition-hero-from)] via-[var(--edition-hero-via)] to-[var(--edition-hero-to)] px-6 pt-6 pb-7">
         <Link
-          href="/goals"
+          href={next ?? "/goals"}
           className="inline-flex min-h-[28px] items-center text-[11px] tracking-[0.14em] text-secondary no-underline hover:underline"
         >
-          ← MY GOALS
+          ← {next === "/challenges/new" ? "BACK TO CHALLENGE" : "MY GOALS"}
         </Link>
         <h1 className="mt-2.5 font-display text-[clamp(28px,4vw,40px)] leading-none font-semibold tracking-tight">
           What are you saving for?
@@ -29,7 +40,7 @@ export default function NewGoalPage() {
         </p>
       </header>
 
-      <GoalForm />
+      <GoalForm next={next} />
     </>
   );
 }

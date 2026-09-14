@@ -10,6 +10,7 @@ import { newId } from "@/lib/store/mutations";
 import { deleteImage, downscale, putImage } from "@/lib/store/images";
 import { parseAmount, toDollars } from "@/lib/money";
 import { toISODate } from "@/lib/dates";
+import { returnPath } from "@/lib/navigation";
 import {
   CATEGORIES,
   CATEGORY_LABEL,
@@ -55,7 +56,14 @@ const fromGoal = (goal: Goal): GoalInput => ({
   notes: goal.notes ?? "",
 });
 
-export function GoalForm({ existing }: { existing?: Goal }) {
+export function GoalForm({
+  existing,
+  /** Set when another page sent the customer here to make a goal first. */
+  next,
+}: {
+  existing?: Goal;
+  next?: string;
+}) {
   const router = useRouter();
   const { addGoal, updateGoal } = useGoals();
   const editing = Boolean(existing);
@@ -142,7 +150,8 @@ export function GoalForm({ existing }: { existing?: Goal }) {
       completedAt: null,
     };
     addGoal(goal);
-    router.push(`/goals/${goal.id}`);
+    // Back where they came from, with the new goal already chosen for them.
+    router.push(returnPath(next, goal.id) ?? `/goals/${goal.id}`);
   }
 
   return (

@@ -1,8 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { Button } from "../ui/Button";
+import { Button, ButtonLink } from "../ui/Button";
+import { PlusIcon } from "../icons";
 import { Field, dateInputClass, inputClass } from "../ui/Field";
 import { Panel } from "../ui/Panel";
 import { useGoals, useNow } from "@/lib/store/GoalsStore";
@@ -54,7 +56,8 @@ export function NewChallengeForm() {
   const now = useNow();
 
   const [type, setType] = useState<ChallengeType>("52-week");
-  const [goalId, setGoalId] = useState("");
+  // Set when the customer has just come back from creating a goal for this.
+  const [goalId, setGoalId] = useState(useSearchParams().get("goal") ?? "");
   const [name, setName] = useState<string | null>(null);
   /** Null means "use the suggestion"; a string means the customer typed it. */
   const [target, setTarget] = useState<string | null>(null);
@@ -119,12 +122,18 @@ export function NewChallengeForm() {
   if (eligible.length === 0) {
     return (
       <Panel title="No goal is ready for a challenge">
-        <p className="max-w-[52ch] text-[13.5px] leading-relaxed text-muted">
-          A challenge saves towards one real goal, so there has to be a goal
-          waiting for it — live, not yet fully funded, and not already running a
-          challenge of its own.
-        </p>
-        {ineligible.length > 0 && <IneligibleList rows={ineligible} />}
+        <div className="flex flex-col items-start gap-4">
+          <p className="max-w-[52ch] text-[13.5px] leading-relaxed text-muted">
+            A challenge saves towards one real goal, so there has to be a goal
+            waiting for it — live, not yet fully funded, and not already running
+            a challenge of its own.
+          </p>
+          {ineligible.length > 0 && <IneligibleList rows={ineligible} />}
+          <ButtonLink href={`/goals/new?next=${encodeURIComponent("/challenges/new")}`}>
+            <PlusIcon className="h-3.5 w-3.5" />
+            Create a goal
+          </ButtonLink>
+        </div>
       </Panel>
     );
   }
@@ -192,6 +201,15 @@ export function NewChallengeForm() {
               </select>
             )}
           </Field>
+
+          {/* Saving towards something not on the list shouldn't be a dead end. */}
+          <Link
+            href={`/goals/new?next=${encodeURIComponent("/challenges/new")}`}
+            className="inline-flex min-h-[24px] items-center gap-1.5 -mt-1 text-[12.5px] text-secondary no-underline hover:underline"
+          >
+            <PlusIcon className="h-3 w-3" />
+            Saving for something else? Create a goal
+          </Link>
 
           {ineligible.length > 0 && <IneligibleList rows={ineligible} />}
 
